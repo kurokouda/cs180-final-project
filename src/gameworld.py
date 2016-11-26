@@ -1,3 +1,4 @@
+from copy import copy
 from random import random
 from math import pi as PI
 
@@ -11,6 +12,8 @@ from .entity.entityfunctiontemplates import (
 )
 from .utils import random_clamped
 from .entity.vehicle import Vehicle
+from .smoother import Smoother
+
 
 class GameWorld(object):
     __slots__ = (
@@ -23,7 +26,7 @@ class GameWorld(object):
         '_window_height',
         '_window_width',
         '_crosshair',
-        '_average_fps',
+        '_average_frame_time',
         '_show_walls',
         '_show_obstacles',
         '_show_path',
@@ -37,8 +40,13 @@ class GameWorld(object):
         '_show_cell_space_info',
     )
 
+    SAMPLE_RATE = 10
+    _frame_rate_smoother = Smoother(SAMPLE_RATE, 0.0)
+
     def __init__(self, window_width, window_height):
         self._vehicles = []
+        self._obstacles = []
+        self._walls = []
         self._window_width = window_width
         self._window_height = window_height
         self._paused = False
@@ -51,7 +59,7 @@ class GameWorld(object):
         self._show_feelers = False
         self._show_detection_box = False
         self._show_fps = True
-        self._average_fps = 0
+        self._average_frame_time = 0
         self._path = None
         self._render_neighbors = False
         self._view_keys = False
@@ -109,6 +117,97 @@ class GameWorld(object):
 
     def tag_vehicles_within_view_range(self, vehicle, range_):
         tag_neighbors(vehicle, self._vehicles, range_)
+
+    def tag_obstacles_within_range(self, vehicle, range_):
+        tag_neighbors(vehicle, self._obstacles, range_)
+
+    def get_walls(self):
+        return self._walls
+
+    def get_cell_space(self):
+        return self._cell_space
+
+    def get_obstacles(self):
+        return self._obstacles
+
+    def get_agents(self):
+        return self._vehicles
+
+    def get_crosshair(self):
+        return self._crosshair
+
+    def set_crosshair(self, value):
+        self._crosshair = copy(value)
+
+    def get_window_width(self):
+        return self._window_width
+
+    def get_window_height(self):
+        return self._window_height
+
+    wall = property(get_walls)
+    cell_space = property(get_cell_space)
+    obstacles = property(get_obstacles)
+    agents = property(get_agents)
+    crosshair = property(get_crosshair, set_crosshair)
+    window_width = property(get_window_width)
+    window_height = property(get_window_height)
+
+    def toggle_pause(self):
+        self._paused = not self._paused
+
+    def toggle_show_fps(self):
+        self._show_fps = not self._show_fps
+
+    def is_paused(self):
+        return self._paused
+
+    def is_render_wall_on(self):
+        return self._show_walls
+
+    def is_render_obstacles_on(self):
+        return self._show_obstacles
+
+    def is_render_path_on(self):
+        return self._show_path
+
+    def is_render_detection_box_on(self):
+        return self._show_detection_box
+
+    def is_render_wander_circle_on(self):
+        return self._show_wander_circle
+
+    def is_render_feelers_on(self):
+        return self._show_feelers
+
+    def is_render_steering_force_on(self):
+        return self._show_steering_force
+
+    def is_render_fps_on(self):
+        return self._show_fps
+
+    def is_view_keys_on(self):
+        return self._view_keys
+
+    def update(self, time_elapsed):
+        if self._paused:
+            return
+
+        self._average_frame_time = (GameWorld
+                ._frame_rate_smoother.update(time_elapsed))
+
+        for vehicle in self._vehicles:
+            vehicle.update(time_elapsed)
+
+    def create_walls(self):
+        return NotImplemented
+
+    def create_obstacles(self):
+        return NotImplemented
+
+    def render(self):
+        return NotImplemented
+
 
 def __main__():
     g = GameWorld(12, 12)
