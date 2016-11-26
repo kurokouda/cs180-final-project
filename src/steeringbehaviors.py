@@ -1,14 +1,18 @@
 from sys import float_info
 from enum import IntEnum, unique
 from random import random
-from copy import deepcopy
+from copy import deepcopy, copy
 import math
 
 from .config import Config
 from .d2.vector2d import Vector2D
 from .path import Path
 from .utils import random_clamped
-from .d2.transformation import point_to_world_space
+from .d2.transformation import (
+    point_to_world_space,
+    point_to_local_space,
+    vector_to_world_space,
+    )
 
 # The radius of the constraining circle for the wander behavior
 WANDER_RADIUS = 1.2
@@ -656,7 +660,99 @@ class SteeringBehaviors(object):
         Keyword arguments:
         obstacles -- collections.abc.MutableSequence<BaseGameEntity>
         '''
-        raise NotImplementedError()
+        # the detection box length is proportional to the agent's velocity
+        self._detection_box_length = (Config().MIN_DETECTION_BOX_LENGTH +
+                (self._vehicle.speed / self._vehicle.max_speed) *
+                Config().MIN_DETECTION_BOX_LENGTH)
+
+        # tag all obstacles within range of the box for processing
+        self._vehicle.world.tag_obstacles_within_view_range(self._vehicle,
+                self._detection_box_length)
+
+        # this will keep track of the closest intersecting obstacle (CIB)
+        closest_intersecting_obstacle = None
+
+        # this will be used to track the distance to the CIB
+        dist_to_closest_ip = float_info.max
+
+        # this will record the transformed local coordinates of the CIB
+        local_pos_of_closest_obstacle = Vector2D()
+
+        for current_obstacle in obstacles:
+            # if the obstacle has been tagged within range proceed
+            if current_obstacle.is_tagged():
+
+                # calculate this obstacle's position in local space
+                local_pos = point_to_local_space(
+                        current_obstacle.position,
+                        self._vehicle.heading,
+                        self._vehicle.side,
+                        self._vehicle.position
+                        )
+
+                # if the local position has a negative x value then it must lay
+                # behind the agent. (in which case it can be ignored)
+                if local_pos.x >= 0:
+
+                    # if the distance from the x axis to the object's position
+                    # is less than its radius + half the width of the
+                    # detection box then there is a potential intersection.
+                    expanded_radius = (current_obstacle.bounding_radius +
+                            self._vehicle.bounding_radius)
+                    if abs(local_pos.y) < expanded_radius:
+
+                        # now to do a line/circle intersection test. The
+                        # center of the circle is represented by (cX, cY). The
+                        # intersection points are given by the formula x = cX
+                        # +/-sqrt(r^2-cY^2) for y=0. We only need to look at
+                        # the smallest positive value of x because that will
+                        # be the closest point of intersection.
+                        circle_center = copy(local_pos)
+
+                        # we only need to calculate the sqrt part of the above
+                        # equation once
+                        sqrt_part = (expanded_radius**2 -
+                                circle_center.y**2)**0.5
+                        ip = circle_center.x - sqrt_part
+                        if ip <= 0.0:
+                            ip = circle_center.x + sqrt_part
+
+                        # test to see if this is the closest so far. If it is
+                        # keep a record of the obstacle and its local
+                        # coordinates
+                        if ip < dist_to_closest_ip:
+                            dist_to_closest_ip = ip
+                            closest_intersecting_obstacle = current_obstacle
+                            local_pos_of_closest_obstacle = local_pos
+
+        # if we have found an intersecting obstacle, calculate a steering
+        # force away from it
+        steering_force = Vector2D()
+        if closest_intersecting_obstacle is not None:
+
+            # the closer the agent is to an object, the stronger the
+            # steering force should be
+            multiplier = 1.0 + (self._detection_box_length -
+                    local_pos_of_closest_obstacle.x /
+                    self._detection_box_length)
+
+            # calculate the lateral force
+            steering_force.y = (
+                    closest_intersecting_obstacle.bounding_radius -
+                    local_pos_of_closest_obstacle.y) * multiplier
+
+            # apply a braking force proportional to the obstacles distance
+            # from the vehicle.
+            BREAKING_WEIGHT = 0.2
+            steering_force.y = (
+                    closest_intersecting_obstacle.bounding_radius -
+                    local_pos_of_closest_obstacle.x) * BREAKING_WEIGHT
+
+        # finally, convert the steering vector from local to world space
+        return vector_to_world_space(steering_force, self._vehicle.heading,
+                self._vehicle.side)
+
+
 
     def _wall_avoidance(self, walls):
         '''SteeringBehaviors._wall_avoidance(self, walls) -> Vector2D
