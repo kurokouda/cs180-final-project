@@ -1,3 +1,4 @@
+from sys import float_info
 from enum import IntEnum, unique
 from random import random
 from copy import deepcopy
@@ -79,24 +80,25 @@ class SteeringBehaviors(object):
     __slots__ = (
         '_vehicle',
         '_steering_force',
-        '_flags',
-        '_detection_box_length',
-        '_view_distance',
-        '_wall_detection_feeler_length',
-        '_feelers',
-        '_deceleration',
-        '_target',
+
         '_target_agent_1',
         '_target_agent_2',
-        '_cell_space_on',
-        '_summing_method',
-        '_offset',
-        '_path',
+        '_target',
+
+        '_detection_box_length',
+        '_feelers',
+        '_wall_detection_feeler_length',
+
+        '_wander_target',
+        '_wander_jitter',
+        '_wander_radius',
+        '_wander_distance',
+
+        '_weight_separation',
         '_weight_cohesion',
         '_weight_alignment',
-        '_weight_separation',
-        '_weight_obstacle_avoidance',
         '_weight_wander',
+        '_weight_obstacle_avoidance',
         '_weight_wall_avoidance',
         '_weight_seek',
         '_weight_flee',
@@ -107,11 +109,15 @@ class SteeringBehaviors(object):
         '_weight_hide',
         '_weight_evade',
         '_weight_follow_path',
-        '_wander_distance',
-        '_wander_jitter',
-        '_wander_radius',
+
+        '_view_distance',
+        '_path',
         '_waypoint_seek_distance_sq',
-        '_wander_target'
+        '_offset',
+        '_flags',
+        '_deceleration',
+        '_cell_space_on',
+        '_summing_method',
     )
 
     def __init__(self, vehicle):
