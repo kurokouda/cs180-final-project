@@ -1,0 +1,93 @@
+{
+    "window": {
+        "WIDTH": 320,
+        "HEIGHT": 240,
+        "FPS": 60
+    },
+    "STDERR": "stderr.txt",
+
+
+
+    "__comment__": [
+        "How many samples the smoother will use to average a value"
+    ],
+    "NUM_SAMPLES_FOR_SMOOTHING": 10,
+
+
+
+    "__comment__": [
+        "This is used to multiply the steering force AND all the",
+        "multipliers found in SteeringBehavior"
+    ],
+    "STEERING_FORCE_TWEAKER": 200.0,
+
+
+
+    "STEERING_FORCE": 2.0,
+    "MAX_SPEED": 100.0,
+    "VEHICLE_MASS": 1.0,
+    "VEHICLE_SCALE": 1.0,
+
+
+
+    "__comment__": [
+        "Use these values to tweak the amount that each steering",
+        "force contributes to the total steering force"
+    ],
+    "weights": {
+        "SEPARATION": 1.0,
+        "ALIGNMENT": 1.0,
+        "COHESION": 2.0,
+        "OBSTACLE_AVOIDANCE": 10.0,
+        "WALL_AVOIDANCE": 10.0,
+        "WANDER": 1.0,
+        "SEEK": 1.0,
+        "FLEE": 1.0,
+        "ARRIVE": 1.0,
+        "PURSUIT": 1.0,
+        "OFFSET_PURSUIT": 1.0,
+        "INTERPOSE": 1.0,
+        "HIDE": 1.0,
+        "EVADE": 0.01,
+        "FOLLOW_PATH": 0.05
+    },
+
+
+
+    "__comment__": [
+        "How close a neighbor must be before an agent perceives it",
+        "(considers it to be within its neighborhood)"
+    ],
+    "VIEW_DISTANCE": 50.0,
+
+
+
+    "__comment__": [ "Used in obstacle avoidance" ],
+    "MIN_DETECTION_BOX_LENGTH": 40.0,
+
+
+
+    "__comment__": [ "Used in wall avoidance" ],
+    "WALL_DETECTION_FELLER_LENGTH": 40.0,
+
+
+
+    "__comment__": [
+        "These are the propbabilities that a steering behavior will",
+        "be used when the Prioritized Dither calculate method is used",
+        "to sum combined behaviors"
+    ],
+    "probabilities": {
+        "WALL_AVOIDANCE": 0.5,
+        "OBSTACLE_AVOIDANCE": 0.5,
+        "SEPARATION": 0.2,
+        "ALIGNMENT": 0.3,
+        "COHESION": 0.6,
+        "WANDER": 0.8,
+        "SEEK": 0.8,
+        "FLEE": 0.6,
+        "EVADE": 1.0,
+        "HIDE": 0.8,
+        "ARRIVE": 0.5
+    }
+}
