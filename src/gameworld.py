@@ -109,3 +109,9 @@ class GameWorld(object):
 
     def tag_vehicles_within_view_range(self, vehicle, range_):
         tag_neighbors(vehicle, self._vehicles, range_)
+
+def __main__():
+    g = GameWorld(12, 12)
+
+if __name__ == '__init__':
+    __main__()
