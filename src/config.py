@@ -45,5 +45,6 @@ class Config(_Struct, metaclass=SingletonABCMeta):
 
     def _add_extras(self, json_data):
         json_data['MAX_TURN_RATE_PER_SECOND'] = PI
+        json_data['CWD'] = _CWD
 
 #pylint: enable=R0903
