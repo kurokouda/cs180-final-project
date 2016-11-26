@@ -12,6 +12,7 @@ from .d2.transformation import (
     point_to_world_space,
     point_to_local_space,
     vector_to_world_space,
+    create_whiskers,
     )
 
 # The radius of the constraining circle for the wander behavior
@@ -216,7 +217,20 @@ class SteeringBehaviors(object):
     def _create_feelers(self):
         '''Creates the antenna utilized by WallAvoidance
         '''
-        raise NotImplementedError()
+        # NOTE: Used <transformation.create_whiskers>, instead of
+        # implementation in java code version. Test first.
+        self._feelers.clear()
+        facing = (self._vehicle.position +
+                (self._wall_detection_feeler_length * self._vehicle.heading))
+        origin = self._vehicle.position
+        self._feelers.extend(create_whiskers(
+                    whisker_count=3,
+                    whisker_length=1,
+                    fov=math.pi / 2.0,
+                    facing=facing,
+                    origin=origin))
+
+
 
     def flee_on(self):
         self._flags |= BehaviorType.FLEE
