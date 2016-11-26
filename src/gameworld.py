@@ -118,7 +118,7 @@ class GameWorld(object):
     def tag_vehicles_within_view_range(self, vehicle, range_):
         tag_neighbors(vehicle, self._vehicles, range_)
 
-    def tag_obstacles_within_range(self, vehicle, range_):
+    def tag_obstacles_within_view_range(self, vehicle, range_):
         tag_neighbors(vehicle, self._obstacles, range_)
 
     def get_walls(self):
