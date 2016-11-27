@@ -830,7 +830,21 @@ class SteeringBehaviors(object):
         Keyword arguments:
         neighbors -- collections.abc.Sequence<Wall2D>
         '''
-        raise NotImplementedError()
+        steering_force = Vector2D()
+        for neighbor in neighbors:
+
+            # make sure this agent isn't included in the calculations and that
+            # the agent being examined is close enough. ***also make sure it
+            # doesn't include the evade target ***
+            if (neighbor != self._vehicle and
+                        neighbor.is_tagged() and
+                    neighbor != self._target_agent_1):
+                to_agent = self._vehicle.position - neighbor.position
+
+                # scale the force inversely proportional to the agents
+                # distance from its neighbor.
+                steering_force += to_agent.normalize() / to_agent.length()
+        return steering_force
 
     def _alignment(self, neighbors):
         '''SteeringBehaviors._alignment(self, neighbors) -> Vector2D
