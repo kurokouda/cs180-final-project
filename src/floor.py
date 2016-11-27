@@ -86,6 +86,17 @@ class Floor(GameWorld):
             self._walls[instance_id] = (
                     Wall2D(from_pt, to_pt, instance_id=instance_id))
 
+        self._doors = {}
+        for door_data in map_data['doors']:
+            from_pt = points[door_data['from']]
+            to_pt = points[door_data['to']]
+            instance_id = door_data['id']
+            if instance_id in map_data['safe_doors']:
+                self._doors[instance_id] = ExitDoor2D(from_pt, to_pt,
+                    instance_id=instance_id)
+            else:
+                self._doors[instance_id] = Door2D(from_pt, to_pt,
+                    instance_id=instance_id)
 
         self._default_surface = pygame.Surface((self._window_width,
                 self._window_height))
