@@ -1,11 +1,18 @@
 {
     "window": {
-        "WIDTH": 320,
-        "HEIGHT": 240,
+        "WIDTH": 1280,
+        "HEIGHT": 720,
         "FPS": 60
     },
-    "STDERR": "stderr.txt",
 
+    "maps": {
+        "directory": "floor_maps",
+        "names": [
+            "first_floor.json",
+            "second_floor.json",
+            "third_floor.json"
+        ]
+    },
 
     "NUM_AGENTS": 300,
     "NUM_FLOORS": 3,
