@@ -1034,7 +1034,23 @@ class SteeringBehaviors(object):
         agent_a -- Vehicle
         agent_b -- Vehicle
         '''
-        raise NotImplementedError()
+        # first we need to figure out where the two agents are going to be at
+        # time T in the future. This is approximated by determining the time
+        # taken to reach the mid way point at the current time at at max speed.
+        mid_point = (agent_a.position + agent_b.position) / 2.0
+        time_to_reach_midpoint = (self._vehicle.position.distance(mid_point) /
+                self._vehicle.max_speed)
+
+        # now we have T, we assume that agent A and agent B will continue on a
+        # straight trajectory and extrapolate to get their future positions
+        a_pos = agent_a.position + (agent_a.velocity * time_to_reach_midpoint)
+        b_pos = agent_b.position + (agent_b.velocity * time_to_reach_midpoint)
+
+        # calculate the mid point of these predicted positions
+        mid_point = (a_pos + b_pos) / 2.0
+
+        # then steer to Arrive at it
+        return self._arrive(mid_point, Deceleration.FAST)
 
     def _hide(self, hunter, obstacles):
         '''SteeringBehaviors._hide(self, hunter, obstacles) -> Vector2D
