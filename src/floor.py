@@ -10,7 +10,7 @@ from .d2.vector2d import Vector2D
 
 from . import wall2d
 
-class Wall2D(wall2d.Wall2D):
+class Wall2D(wall2d.Wall2D, object):
     __slots__ = wall2d.Wall2D.__slots__
     def draw(self, surface):
         pygame.draw.line(surface, pygame.Color('black'), self._from_pt,
