@@ -57,7 +57,8 @@ class Triangle2D(Sequence):
         return self._id
 
     def draw(self, surface):
-        pygame.draw.polygon(surface, pygame.Color('gray20'), self._points, 1)
+        pygame.draw.aalines(surface, pygame.Color(200, 200, 200), True,
+            self._points)
 
 class Floor(GameWorld):
 
