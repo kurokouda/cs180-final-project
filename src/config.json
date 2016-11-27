@@ -7,6 +7,13 @@
     "STDERR": "stderr.txt",
 
 
+    "NUM_AGENTS": 300,
+    "NUM_FLOORS": 3,
+    "_NUM_AGENTS": [ 100, 40, 20 ],
+    "NUM_CELLS_X": 7,
+    "NUM_CELLS_Y": 7,
+
+
 
     "__comment__": [
         "How many samples the smoother will use to average a value"
@@ -20,9 +27,6 @@
         "multipliers found in SteeringBehavior"
     ],
     "STEERING_FORCE_TWEAKER": 200.0,
-
-
-
     "STEERING_FORCE": 2.0,
     "MAX_SPEED": 100.0,
     "VEHICLE_MASS": 1.0,

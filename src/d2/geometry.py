@@ -1,3 +1,5 @@
+from math import isclose
+from .vector2d import Vector2D
 # from enum import IntEnum
 
 # from .vector2d import Vector2D
@@ -42,9 +44,27 @@ def distance_to_line_segment_sq(pt_a, pt_b, arb_pt):
     pt = pt_a + ((pt_b - pt_a) * dot_a) / (dot_a + dot_b)
     return arb_pt.distance_sq(pt)
 
+def line_intersection_2d(a, b, c, d):
+    r_top = (a.y - c.y) * (d.x - c.x) - (a.x - c.x) * (d.y - c.y)
+    r_bot = (b.x - a.x) * (d.y - c.y) - (b.y - a.y) * (d.x - c.x)
+    s_top = (a.y - c.y) * (b.x - a.x) - (a.x - c.x) * (b.y - a.y)
+    s_bot = (b.x - a.x) * (d.y - c.y) - (b.y - a.y) * (d.x - c.x)
+    output = dict(has_ip=False, dist_to_ip=None,
+            ip=None)
 
-# def line_intersection_2d(line_1_pt_a, line_1_pt_b, line_2_pt_a, line_2_pt_b):
-#     raise NotImplementedError()
+    if not (isclose(r_bot, 0) or isclose(s_bot, 0)):
+        r = r_top / r_bot
+        s = s_top / s_bot
+
+        if r > 0 and r < 1 and s > 0 and s < 1:
+            output['dist_to_ip'] = a.distance(b) * r
+            output['ip'] = a + (r * (b - a))
+            output['has_ip'] = True
+        else:
+            output['dist_tp_ip'] = 0.0
+
+    return output
+
 
 def two_circles_overlapped(center_a, radius_a, center_b, radius_b):
     distance_between_centers = ((center_a.x - center_b.x)**2 +

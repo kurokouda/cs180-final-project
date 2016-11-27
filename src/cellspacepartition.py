@@ -10,7 +10,7 @@ If an entity is capable of moving, and therefore capable of moving
 from collections.abc import Iterable
 from collections import deque
 
-from .invertedaabbox2d import InvertedAABBox2D
+from .d2.invertedaabbox2d import InvertedAABBox2D
 from .d2.vector2d import Vector2D
 
 

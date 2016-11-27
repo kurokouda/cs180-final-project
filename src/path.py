@@ -48,7 +48,7 @@ class Path(Iterable):
     def _goto_next_waypoint(self):
         self._current_index = next(self._current_waypoint_it)
 
-    def get_current(self):
+    def get_current_waypoint(self):
         if self._current_waypoint_it is None:
             raise ValueError("{}._current_waypoint is None"
                     .format(self.__class__.__name__))
@@ -66,7 +66,7 @@ class Path(Iterable):
             self._goto_next_waypoint()
 
     path = property(get_path, set_path)
-    current = property(get_current)
+    current_waypoint = property(get_current_waypoint)
 
     def is_finished(self):
         return len(self._waypoints) - 1 == self._current_index

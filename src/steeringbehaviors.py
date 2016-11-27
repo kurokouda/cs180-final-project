@@ -1,13 +1,20 @@
+from sys import float_info
 from enum import IntEnum, unique
 from random import random
-from copy import deepcopy
+from copy import deepcopy, copy
 import math
 
 from .config import Config
 from .d2.vector2d import Vector2D
 from .path import Path
 from .utils import random_clamped
-from .d2.transformation import point_to_world_space
+from .d2.transformation import (
+        point_to_world_space,
+        point_to_local_space,
+        vector_to_world_space,
+        create_whiskers,
+        line_intersection_2d,
+        )
 
 # The radius of the constraining circle for the wander behavior
 WANDER_RADIUS = 1.2
@@ -79,24 +86,25 @@ class SteeringBehaviors(object):
     __slots__ = (
         '_vehicle',
         '_steering_force',
-        '_flags',
-        '_detection_box_length',
-        '_view_distance',
-        '_wall_detection_feeler_length',
-        '_feelers',
-        '_deceleration',
-        '_target',
+
         '_target_agent_1',
         '_target_agent_2',
-        '_cell_space_on',
-        '_summing_method',
-        '_offset',
-        '_path',
+        '_target',
+
+        '_detection_box_length',
+        '_feelers',
+        '_wall_detection_feeler_length',
+
+        '_wander_target',
+        '_wander_jitter',
+        '_wander_radius',
+        '_wander_distance',
+
+        '_weight_separation',
         '_weight_cohesion',
         '_weight_alignment',
-        '_weight_separation',
-        '_weight_obstacle_avoidance',
         '_weight_wander',
+        '_weight_obstacle_avoidance',
         '_weight_wall_avoidance',
         '_weight_seek',
         '_weight_flee',
@@ -107,11 +115,15 @@ class SteeringBehaviors(object):
         '_weight_hide',
         '_weight_evade',
         '_weight_follow_path',
-        '_wander_distance',
-        '_wander_jitter',
-        '_wander_radius',
+
+        '_view_distance',
+        '_path',
         '_waypoint_seek_distance_sq',
-        '_wander_target'
+        '_offset',
+        '_flags',
+        '_deceleration',
+        '_cell_space_on',
+        '_summing_method',
     )
 
     def __init__(self, vehicle):
@@ -201,12 +213,51 @@ class SteeringBehaviors(object):
             vehicle has left to apply and then applies that amount of the
             force to add.
         '''
-        raise NotImplementedError()
+        output = dict(has_force_left=False, running_total=copy(running_total))
+
+        # calculate how much steering force the vehicle has used so far
+        magnitude_so_far = running_total.length()
+
+        # calculate how much steering force remains to be used by this vehicle
+        magnitude_remaining = self._vehicle.max_force - magnitude_so_far
+
+        # return false if there is no more force left to use
+        if magnitude_remaining > 0:
+
+            # calculate the magnitude of the force we want to add
+            magnitude_to_add = force_to_add.length()
+            output['has_force_left'] = True
+
+            # if the magnitude of the sum of ForceToAdd and the running total
+            # does not exceed the maximum force available to this vehicle, just
+            # add together. Otherwise add as much of the ForceToAdd vector is
+            # possible without going over the max.
+            if magnitude_to_add < magnitude_remaining:
+                output['running_total'] += force_to_add
+            else:
+                output['running_total'] += (force_to_add.normalize() *
+                            magnitude_remaining)
+
+        return output
 
     def _create_feelers(self):
         '''Creates the antenna utilized by WallAvoidance
         '''
-        raise NotImplementedError()
+        # NOTE: Used <transformation.create_whiskers>, instead of
+        # implementation in java code version. Test first.
+        self._feelers.clear()
+        facing = (self._vehicle.position +
+                (self._wall_detection_feeler_length * self._vehicle.heading))
+        origin = self._vehicle.position
+        self._feelers.extend(create_whiskers(
+                    whisker_count=3,
+                    whisker_length=1,
+                    fov=math.pi / 2.0,
+                    facing=facing,
+                    origin=origin))
+
+    def _is_on(self, behavior):
+        return (self._flags & behavior) == behavior
 
     def flee_on(self):
         self._flags |= BehaviorType.FLEE
@@ -650,7 +701,99 @@ class SteeringBehaviors(object):
         Keyword arguments:
         obstacles -- collections.abc.MutableSequence<BaseGameEntity>
         '''
-        raise NotImplementedError()
+        # the detection box length is proportional to the agent's velocity
+        self._detection_box_length = (Config().MIN_DETECTION_BOX_LENGTH +
+                (self._vehicle.speed / self._vehicle.max_speed) *
+                Config().MIN_DETECTION_BOX_LENGTH)
+
+        # tag all obstacles within range of the box for processing
+        self._vehicle.world.tag_obstacles_within_view_range(self._vehicle,
+                self._detection_box_length)
+
+        # this will keep track of the closest intersecting obstacle (CIB)
+        closest_intersecting_obstacle = None
+
+        # this will be used to track the distance to the CIB
+        dist_to_closest_ip = float_info.max
+
+        # this will record the transformed local coordinates of the CIB
+        local_pos_of_closest_obstacle = Vector2D()
+
+        for current_obstacle in obstacles:
+            # if the obstacle has been tagged within range proceed
+            if current_obstacle.is_tagged():
+
+                # calculate this obstacle's position in local space
+                local_pos = point_to_local_space(
+                        current_obstacle.position,
+                        self._vehicle.heading,
+                        self._vehicle.side,
+                        self._vehicle.position
+                        )
+
+                # if the local position has a negative x value then it must lay
+                # behind the agent. (in which case it can be ignored)
+                if local_pos.x >= 0:
+
+                    # if the distance from the x axis to the object's position
+                    # is less than its radius + half the width of the
+                    # detection box then there is a potential intersection.
+                    expanded_radius = (current_obstacle.bounding_radius +
+                            self._vehicle.bounding_radius)
+                    if abs(local_pos.y) < expanded_radius:
+
+                        # now to do a line/circle intersection test. The
+                        # center of the circle is represented by (cX, cY). The
+                        # intersection points are given by the formula x = cX
+                        # +/-sqrt(r^2-cY^2) for y=0. We only need to look at
+                        # the smallest positive value of x because that will
+                        # be the closest point of intersection.
+                        circle_center = copy(local_pos)
+
+                        # we only need to calculate the sqrt part of the above
+                        # equation once
+                        sqrt_part = (expanded_radius**2 -
+                                circle_center.y**2)**0.5
+                        ip = circle_center.x - sqrt_part
+                        if ip <= 0.0:
+                            ip = circle_center.x + sqrt_part
+
+                        # test to see if this is the closest so far. If it is
+                        # keep a record of the obstacle and its local
+                        # coordinates
+                        if ip < dist_to_closest_ip:
+                            dist_to_closest_ip = ip
+                            closest_intersecting_obstacle = current_obstacle
+                            local_pos_of_closest_obstacle = local_pos
+
+        # if we have found an intersecting obstacle, calculate a steering
+        # force away from it
+        steering_force = Vector2D()
+        if closest_intersecting_obstacle is not None:
+
+            # the closer the agent is to an object, the stronger the
+            # steering force should be
+            multiplier = 1.0 + (self._detection_box_length -
+                    local_pos_of_closest_obstacle.x /
+                    self._detection_box_length)
+
+            # calculate the lateral force
+            steering_force.y = (
+                    closest_intersecting_obstacle.bounding_radius -
+                    local_pos_of_closest_obstacle.y) * multiplier
+
+            # apply a braking force proportional to the obstacles distance
+            # from the vehicle.
+            BREAKING_WEIGHT = 0.2
+            steering_force.y = (
+                    closest_intersecting_obstacle.bounding_radius -
+                    local_pos_of_closest_obstacle.x) * BREAKING_WEIGHT
+
+        # finally, convert the steering vector from local to world space
+        return vector_to_world_space(steering_force, self._vehicle.heading,
+                self._vehicle.side)
+
+
 
     def _wall_avoidance(self, walls):
         '''SteeringBehaviors._wall_avoidance(self, walls) -> Vector2D
@@ -661,7 +804,47 @@ class SteeringBehaviors(object):
         Keyword arguments:
         walls -- collections.abc.Sequence<Wall2D>
         '''
-        raise NotImplementedError()
+        # the feelers are contained in a list self._feelers
+        self._create_feelers()
+        dist_to_closest_ip = float_info.max
+
+        # this will hold an index into the vector of walls
+        closest_wall = None
+        steering_force = Vector2D()
+        closest_ip = Vector2D()
+
+        # examine each feeler in turn
+        for feeler in self._feelers:
+
+            # run through each wall checking for any intersection points
+            for wall in walls:
+                lines = line_intersection_2d(
+                        self._vehicle.position,
+                        feeler,
+                        wall.from_pt,
+                        wall.to_pt)
+                if lines['has_ip']:
+
+                    # is this the closest found so far? If so keep a record
+                    if lines['dist_to_ip'] < dist_to_closest_ip:
+                        closest_wall = wall
+                        closest_ip = lines['ip']
+
+            # if an intersection point has been detected, calculate a force
+            # that will direct the agent away
+            if closest_wall is not None:
+
+                # calculate by what distance the projected position of the
+                # agent will overshoot the wall
+                overshoot = feeler - closest_ip
+
+                # create a force in the direction of the wall normal, with a
+                # magnitude of the overshoot
+                steering_force = closest_wall.normal * overshoot.length()
+
+        return steering_force
+
+
 
     def _separation(self, neighbors):
         '''SteeringBehaviors._separation(self, neighbors) -> Vector2D
@@ -671,7 +854,23 @@ class SteeringBehaviors(object):
         Keyword arguments:
         neighbors -- collections.abc.Sequence<Wall2D>
         '''
-        raise NotImplementedError()
+        steering_force = Vector2D()
+        for neighbor in neighbors:
+
+            # make sure this agent isn't included in the calculations and that
+            # the agent being examined is close enough. ***also make sure it
+            # doesn't include the evade target ***
+            if (neighbor != self._vehicle and
+                        neighbor.is_tagged() and
+                    neighbor != self._target_agent_1):
+                to_agent = self._vehicle.position - neighbor.position
+
+                # scale the force inversely proportional to the agents
+                # distance from its neighbor.
+                steering_force += to_agent.normalize() / to_agent.length()
+        return steering_force
+
+
 
     def _alignment(self, neighbors):
         '''SteeringBehaviors._alignment(self, neighbors) -> Vector2D
@@ -682,7 +881,34 @@ class SteeringBehaviors(object):
         Keyword arguments:
         neighbors -- collections.abc.Sequence<Wall2D>
         '''
-        raise NotImplementedError()
+        # used to record the average heading of the neighbors
+        average_heading = Vector2D()
+
+        # used to count the number of vehicles in the neighborhood
+        neighbor_count = 0
+
+        # iterate through all the tagged vehicles and sum their heading
+        # vectors
+        for neighbor in neighbors:
+
+            # make sure *this* agent isn't included in the calculations and
+            # that the agent being examined  is close enough ***also make sure
+            # it doesn't include any evade target ***
+            if (neighbor != self._vehicle and
+                        neighbor.is_tagged() and
+                    neighbor != self._target_agent_1):
+                average_heading += neighbor.heading
+                neighbor_count += 1
+
+        # if the neighborhood contained one or more vehicles, average their
+        # heading vectors.
+        if neighbor_count > 0:
+            average_heading /= neighbor_count
+            average_heading -= self._vehicle.heading
+
+        return average_heading
+
+
 
     def _cohesion(self, neighbors):
         '''SteeringBehaviors._cohesion(self, neighbors) -> Vector2D
@@ -693,11 +919,41 @@ class SteeringBehaviors(object):
         Keyword arguments:
         neighbors -- collections.abc.Sequence<Wall2D>
         '''
-        raise NotImplementedError()
+        # first find the center of mass of all the agents
+        center_of_mass = Vector2D()
+        neighbor_count = 0
+
+        # iterate through all the tagged vehicles and sum their heading
+        # vectors
+        for neighbor in neighbors:
+
+            # make sure *this* agent isn't included in the calculations and
+            # that the agent being examined  is close enough ***also make sure
+            # it doesn't include any evade target ***
+            if (neighbor != self._vehicle and
+                        neighbor.is_tagged() and
+                    neighbor != self._target_agent_1):
+                center_of_mass += neighbor.position
+                neighbor_count += 1
+
+        steering_force = Vector2D()
+        if neighbor_count > 0:
+
+            # the center of mass is the average of the sum of positions
+            center_of_mass /= neighbor_count
+
+            # now seek towards that position
+            steering_force = self._seek(center_of_mass)
+
+        # the magnitude of cohesion is usually much larger than separation or
+        # allignment so it usually helps to normalize it.
+        return steering_force.normalize()
+
 
 
     # NOTE: The next three behaviors are the same as the above three, except
     #   that they use a cell-space partition to find the neighbors
+
 
 
     def _separation_plus(self, neighbors):
@@ -709,7 +965,21 @@ class SteeringBehaviors(object):
         Keyword arguments:
         neighbors -- collections.abc.Sequence<Wall2D>
         '''
-        raise NotImplementedError()
+        # iterate through the neighbors and sum up all the position vectors
+        steering_force = Vector2D()
+        for neighbor in self._vehicle.world.cell_space:
+
+            # make sure this agent isn't included in the calculations and that
+            # the agent being examined is close enough
+            if neighbor != self._vehicle:
+                to_agent = self._vehicle.position - neighbor.position
+
+                # scale the force inversely proportional to the agents
+                # distance from its neighbor.
+                steering_force += to_agent.normalize() / to_agent.length()
+        return steering_force
+
+
 
     def _alignment_plus(self, neighbors):
         '''SteeringBehaviors._alignment_plus(self, neighbors) -> Vector2D
@@ -721,7 +991,30 @@ class SteeringBehaviors(object):
         Keyword arguments:
         neighbors -- collections.abc.Sequence<Wall2D>
         '''
-        raise NotImplementedError()
+        # this will record the average heading of the neighbors
+        average_heading = Vector2D()
+
+        # This count the number of vehicles in the neighborhood
+        neighbor_count = 0
+
+        # iterate through the neighbors and sum up all the position vectors
+        for neighbor in self._vehicle.world.cell_space:
+
+            # make sure *this* agent isn't included in the calculations and
+            # that the agent being examined  is close enough
+            if neighbor != self._vehicle:
+                average_heading += neighbor.heading
+                neighbor_count += 1
+
+        # if the neighborhood contained one or more vehicles, average their
+        # heading vectors
+        if neighbor_count > 0:
+            average_heading /= neighbor_count
+            average_heading -= self._vehicle.heading
+
+        return average_heading
+
+
 
     def _cohesion_plus(self, neighbors):
         '''SteeringBehaviors._cohesion_plus(self, neighbors) -> Vector2D
@@ -733,7 +1026,33 @@ class SteeringBehaviors(object):
         Keyword arguments:
         neighbors -- collections.abc.Sequence<Wall2D>
         '''
-        raise NotImplementedError()
+        # first find the center of mass of all the agents
+        center_of_mass = Vector2D()
+        steering_force = Vector2D()
+        neighbor_count = 0
+
+        # iterate through the neighbors and sum up all the position vectors
+        for neighbor in self._vehicle.world.cell_space:
+
+            # make sure *this* agent isn't included in the calculations and
+            # that the agent being examined is close enough
+            if neighbor != self._vehicle:
+                center_of_mass += neighbor.position
+                neighbor_count += 1
+
+        if neighbor_count > 0:
+
+            # the center of mass is the average of the sum of positions
+            center_of_mass /= neighbor_count
+
+            # now seek towards that position
+            steering_force = self._seek(center_of_mass)
+
+        # the magnitude of cohesion is usually much larger than separation or
+        # allignment so it usually helps to normalize it.
+        return steering_force.normalize()
+
+
 
     def _interpose(self, agent_a, agent_b):
         '''SteeringBehaviors._interpose(self, agent_a, agent_b) -> Vector2D
@@ -745,7 +1064,25 @@ class SteeringBehaviors(object):
         agent_a -- Vehicle
         agent_b -- Vehicle
         '''
-        raise NotImplementedError()
+        # first we need to figure out where the two agents are going to be at
+        # time T in the future. This is approximated by determining the time
+        # taken to reach the mid way point at the current time at at max speed.
+        mid_point = (agent_a.position + agent_b.position) / 2.0
+        time_to_reach_midpoint = (self._vehicle.position.distance(mid_point) /
+                self._vehicle.max_speed)
+
+        # now we have T, we assume that agent A and agent B will continue on a
+        # straight trajectory and extrapolate to get their future positions
+        a_pos = agent_a.position + (agent_a.velocity * time_to_reach_midpoint)
+        b_pos = agent_b.position + (agent_b.velocity * time_to_reach_midpoint)
+
+        # calculate the mid point of these predicted positions
+        mid_point = (a_pos + b_pos) / 2.0
+
+        # then steer to Arrive at it
+        return self._arrive(mid_point, Deceleration.FAST)
+
+
 
     def _hide(self, hunter, obstacles):
         '''SteeringBehaviors._hide(self, hunter, obstacles) -> Vector2D
@@ -757,7 +1094,36 @@ class SteeringBehaviors(object):
         hunter -- Vehicle
         obstacles -- collections.abc.Sequence<BaseGameEntity>
         '''
-        raise NotImplementedError()
+        dist_to_closest = float_info.max
+        best_hiding_spot = Vector2D()
+        # closest = None
+
+        for current_obstacle in obstacles:
+
+            # calculate the position of the hiding spot for this obstacle
+            hiding_spot = self._get_hiding_position(
+                    current_obstacle.position,
+                    current_obstacle.bounding_radius,
+                    hunter.position
+                    )
+
+            # work in distance-squared space to find the closest hiding
+            # spot to the age
+            dist_sq = hiding_spot.distance_sq(self._vehicle.position)
+            if dist_sq < dist_to_closest:
+                dist_to_closest = dist_sq
+                best_hiding_spot = hiding_spot
+                # closest = current_obstacle
+
+        # if no suitable obstacles found then Evade the hunter
+        if dist_to_closest == float_info.max:
+            return self._evade(hunter)
+
+        # else use Arrive on the hiding spot
+        return self._arrive(best_hiding_spot, Deceleration.FAST)
+
+
+
 
     def _get_hiding_position(self, pos_ob, radius_ob, pos_hunter):
         '''SteeringBehaviors._get_hiding_position(self, pos_ob, radius_ob,
@@ -773,7 +1139,19 @@ class SteeringBehaviors(object):
         radius -- numers.Real
         pos_hunter -- Vector2D
         '''
-        raise NotImplementedError()
+        # calculate how far away the agent is to be from the chosen obstacle's
+        # bounding radius
+        distance_from_boundary = 30.0
+        dist_away = radius_ob + distance_from_boundary
+
+        # calculate the heading toward the object from the hunter
+        to_ob = (pos_ob - pos_hunter).normalize()
+
+        # scale it to size and add to the obstacles position to get
+        # the hiding spot.
+        return (to_ob * dist_away) + pos_ob
+
+
 
     def _follow_path(self):
         '''SteeringBehaviors._follow_path(self) -> Vector2D
@@ -783,7 +1161,18 @@ class SteeringBehaviors(object):
             'Seek' behavior to move to the next waypoint - unless it is the
             last waypoint, in which case it 'Arrives'.
         '''
-        raise NotImplementedError()
+        # move to next target if close enough to current target (working in
+        # distance squared space)
+        if (self._path.current_waypoint.distance_sq(self._vehicle.position) <
+                self._waypoint_seek_distance_sq):
+            self._path.set_next_waypoint()
+
+        if self._path.is_finished():
+            return self._seek(self._path.current_waypoint)
+
+        return self._arrive(self._path.current_waypoint, Deceleration.NORMAL)
+
+
 
     def _offset_pursuit(self, leader, offset):
         '''SteeringBehaviors._offset_pursuit(leader, offset) -> Vector2D
@@ -795,7 +1184,25 @@ class SteeringBehaviors(object):
         leader -- Vehicle
         offset -- Vector2D
         '''
-        raise NotImplementedError()
+        # calculate the offset's position in world space
+        world_offset_pos = point_to_world_space(
+                point=offset,
+                agent_heading=leader.heading,
+                agent_side=leader.side,
+                agent_position=leader.position)
+
+        to_offset = world_offset_pos - self._vehicle.pos
+
+        # the lookahead time is propotional to the distance between the leader
+        # and the pursuer; and is inversely proportional to the sum of both
+        # agent's velocities
+        look_ahead_time = (to_offset.length() /
+                (self._vehicle.max_speed + leader.speed))
+
+        # now Arrive at the predicted future position of the offset
+        return self._arrive(world_offset_pos +
+                (leader.velocity * look_ahead_time), Deceleration.FAST)
+
 
 
     def calculate(self):
@@ -804,21 +1211,55 @@ class SteeringBehaviors(object):
         Calculates the accumulated steering force according to the method set
             in self._summing_method.
         '''
-        raise NotImplementedError()
+        self._steering_force.zero()
+
+        if not self.is_space_partitioning_on():
+            if (self._is_on(BehaviorType.SEPARATION) or
+                    self._is_on(BehaviorType.ALIGNMENT) or
+                    self._is_on(BehaviorType.COHESION)):
+                self._vehicle.world.tag_vehicles_within_view_range(
+                        self._vehicle,
+                        self._view_distance
+                        )
+        else:
+            if (self._is_on(BehaviorType.SEPARATION) or
+                    self._is_on(BehaviorType.ALIGNMENT) or
+                    self._is_on(BehaviorType.COHESION)):
+                self._vehicle.world.cell_space.calculate_neighbors(
+                        self._vehicle.position,
+                        self._view_distance
+                        )
+
+        if self._summing_method == SummingMethod.WEIGHTED_AVERAGE:
+            self._steering_force = self._calculate_weighted_sum()
+        elif self._summing_method == SummingMethod.PRIORITIZED:
+            self._steering_force = self._calculate_prioritized()
+        elif self._summing_method == SummingMethod.DITHERED:
+            self._steering_force = self._calculate_dithered()
+        else:
+            self._steering_force = Vector2D()
+
+        return self._steering_force
+
+
 
     def forward_component(self):
         '''SteeringBehaviors.forward_component(self) -> Vector2D
 
         Returns the forward component of the steering force.
         '''
-        raise NotImplementedError()
+        return self._vehicle.heading * self._steering_force
+
+
 
     def side_component(self):
         '''SteeringBehaviors.side_component(self) -> Vector2D
 
         Returns the side component of the steering force
         '''
-        raise NotImplementedError()
+        return self._vehicle.side * self._steering_force
+
+
 
     def _calculate_prioritized(self):
         '''SteeringBehaviors.calculate_prioritized(self) -> Vector2D
@@ -828,7 +1269,169 @@ class SteeringBehaviors(object):
             is reached, at which time the function returns the steering force
             accumulated to that  point
         '''
-        raise NotImplementedError()
+        force = Vector2D()
+
+        if self._is_on(BehaviorType.WALL_AVOIDANCE):
+            force = (self._wall_avoidance(self._vehicle.world.walls) *
+                    self._weight_wall_avoidance)
+            has_force_left, self._steering_force = self._accumulate_force(
+                    self._steering_force, force).values()
+            if not has_force_left:
+                return self._steering_force
+
+        if self._is_on(BehaviorType.OBSTACLE_AVOIDANCE):
+            force = self._obstacle_avoidance(self._vehicle.world.obstacles,
+                    self._weight_obstacle_avoidance)
+            has_force_left, self._steering_force = self._accumulate_force(
+                    self._steering_force, force).values()
+            if not has_force_left:
+                return self._steering_force
+
+        if self._is_on(BehaviorType.EVADE):
+            if self._target_agent_1 is None:
+                raise ValueError('Evade target not assigned')
+
+            force = self._evade(self._target_agent_1) * self._weight_evade
+            has_force_left, self._steering_force = self._accumulate_force(
+                    self._steering_force, force).values()
+            if not has_force_left:
+                return self._steering_force
+
+        if self._is_on(BehaviorType.FLEE):
+            force = (self._flee(self._vehicle.world.crosshair) *
+                    self._weight_flee)
+            has_force_left, self._steering_force = self._accumulate_force(
+                    self._steering_force, force).values()
+            if not has_force_left:
+                return self._steering_force
+
+        if not self.is_space_partitioning_on():
+            if self._is_on(BehaviorType.SEPARATION):
+                force = (self._separation(self._vehicle.world.agents) *
+                        self._weight_separation)
+                has_force_left, self._steering_force = self._accumulate_force(
+                        self._steering_force, force).values()
+                if not has_force_left:
+                    return self._steering_force
+
+            if self._is_on(BehaviorType.ALIGNMENT):
+                force = (self._alignment(self._vehicle.world.agents) *
+                        self._weight_alignment)
+                has_force_left, self._steering_force = self._accumulate_force(
+                        self._steering_force, force).values()
+                if not has_force_left:
+                    return self._steering_force
+
+            if self._is_on(BehaviorType.COHESION):
+                force = (self._cohesion(self._vehicle.world.agents) *
+                        self._weight_cohesion)
+                has_force_left, self._steering_force = self._accumulate_force(
+                        self._steering_force, force).values()
+                if not has_force_left:
+                    return self._steering_force
+        else:
+            if self._is_on(BehaviorType.SEPARATION):
+                force = (self._separation_plus(self._vehicle.world.agents) *
+                        self._weight_separation)
+                has_force_left, self._steering_force = self._accumulate_force(
+                        self._steering_force, force).values()
+                if not has_force_left:
+                    return self._steering_force
+
+            if self._is_on(BehaviorType.ALIGNMENT):
+                force = (self._alignment_plus(self._vehicle.world.agents) *
+                        self._weight_alignment)
+                has_force_left, self._steering_force = self._accumulate_force(
+                        self._steering_force, force).values()
+                if not has_force_left:
+                    return self._steering_force
+
+            if self._is_on(BehaviorType.COHESION):
+                force = (self._cohesion_plus(self._vehicle.world.agents) *
+                        self._weight_cohesion)
+                has_force_left, self._steering_force = self._accumulate_force(
+                        self._steering_force, force).values()
+                if not has_force_left:
+                    return self._steering_force
+
+        if self._is_on(BehaviorType.SEEK):
+            force = (self._seek(self._vehicle.world.crosshair) *
+                    self._weight_seek)
+            has_force_left, self._steering_force = self._accumulate_force(
+                    self._steering_force, force).values()
+            if not has_force_left:
+                return self._steering_force
+
+        if self._is_on(BehaviorType.ARRIVE):
+            force = (self._arrive(self._vehicle.world.crosshair,
+                        self._deceleration) *
+                    self._weight_arrive)
+            has_force_left, self._steering_force = self._accumulate_force(
+                    self._steering_force, force).values()
+            if not has_force_left:
+                return self._steering_force
+
+        if self._is_on(BehaviorType.WANDER):
+            force = self._wander() * self._weight_wander
+            has_force_left, self._steering_force = self._accumulate_force(
+                    self._steering_force, force).values()
+            if not has_force_left:
+                return self._steering_force
+
+        if self._is_on(BehaviorType.PURSUIT):
+            assert self._target_agent_1 is not None, ('Pursuit target not ' +
+                    'assigned')
+            force = (self._pursuit(self._target_agent_1) *
+                    self._weight_pursuit)
+            has_force_left, self._steering_force = self._accumulate_force(
+                    self._steering_force, force).values()
+            if not has_force_left:
+                return self._steering_force
+
+        if self._is_on(BehaviorType.OFFSET_PURSUIT):
+            assert self._target_agent_1 is not None, ('Pursuit target not ' +
+                    'assigned')
+            assert not self._offset.is_zero(), 'No offset assigned'
+
+            force = (self._offset_pursuit(self._target_agent_1, self._offset) *
+                    self._weight_offset_pursuit)
+            has_force_left, self._steering_force = self._accumulate_force(
+                    self._steering_force, force).values()
+            if not has_force_left:
+                return self._steering_force
+
+        if self._is_on(BehaviorType.INTERPOSE):
+            assert (self._target_agent_1 is not None and
+                    self._target_agent_2 is not None), ('Interpose agents ' +
+                        'not assigned')
+            force = (self._interpose(self._target_agent_1,
+                        self._target_agent_2) *
+                    self._weight_interpose)
+            has_force_left, self._steering_force = self._accumulate_force(
+                    self._steering_force, force).values()
+            if not has_force_left:
+                return self._steering_force
+
+        if self._is_on(BehaviorType.HIDE):
+            assert self._target_agent_1 is not None, ('Hide target not ' +
+                    'asssigned')
+            force = (self._hide(self._target_agent_1,
+                        self._vehicle.world.obstacles) *
+                    self._weight_hide)
+            has_force_left, self._steering_force = self._accumulate_force(
+                    self._steering_force, force).values()
+            if not has_force_left:
+                return self._steering_force
+
+        if self._is_on(BehaviorType.FOLLOW_PATH):
+            force = self._follow_path() * self._weight_follow_path
+            has_force_left, self._steering_force = self._accumulate_force(
+                    self._steering_force, force).values()
+            if not has_force_left:
+                return self._steering_force
+
+        return self._steering_force
+
 
 
     def _calculate_weighted_sum(self):
@@ -838,12 +1441,115 @@ class SteeringBehaviors(object):
             truncates the result to the max available steering force before
             returning.
         '''
-        raise NotImplementedError()
+        if self._is_on(BehaviorType.WALL_AVOIDANCE):
+            self._steering_force += (self._wall_avoidance(
+                        self._vehicle.world.walls) *
+                    self._weight_wall_avoidance)
+
+        if self._is_on(BehaviorType.OBSTACLE_AVOIDANCE):
+            self._steering_force += (self._obstacle_avoidance(
+                        self._vehicle.world.obstacles) *
+                    self._weight_obstacle_avoidance)
+
+        if self._is_on(BehaviorType.EVADE):
+            if self._target_agent_1 is None:
+                raise ValueError('Evade target not assigned')
+
+            self._steering_force += (self._evade(
+                        self._target_agent_1) *
+                    self._weight_evade)
+
+        if self._is_on(BehaviorType.FLEE):
+            self._steering_force += (self._flee(
+                        self._vehicle.world.crosshair) *
+                    self._weight_flee)
+
+        if not self.is_space_partitioning_on():
+            if self._is_on(BehaviorType.SEPARATION):
+                self._steering_force += (self._separation(
+                        self._vehicle.world.agents) *
+                    self._weight_separation)
+
+            if self._is_on(BehaviorType.ALIGNMENT):
+                self._steering_force += (self._alignment(
+                        self._vehicle.world.agents) *
+                    self._weight_alignment)
+
+            if self._is_on(BehaviorType.COHESION):
+                self._steering_force += (self._cohesion(
+                        self._vehicle.world.agents) *
+                    self._weight_cohesion)
+        else:
+            if self._is_on(BehaviorType.SEPARATION):
+                self._steering_force += (self._separation_plus(
+                        self._vehicle.world.agents) *
+                    self._weight_separation)
+
+            if self._is_on(BehaviorType.ALIGNMENT):
+                self._steering_force += (self._alignment_plus(
+                        self._vehicle.world.agents) *
+                    self._weight_alignment)
+
+            if self._is_on(BehaviorType.COHESION):
+                self._steering_force += (self._cohesion_plus(
+                        self._vehicle.world.agents) *
+                    self._weight_cohesion)
+
+        if self._is_on(BehaviorType.SEEK):
+            self._steering_force += (self._seek(
+                        self._vehicle.world.crosshair) *
+                    self._weight_seek)
+
+        if self._is_on(BehaviorType.ARRIVE):
+            self._steering_force += (self._arrive(
+                        self._vehicle.world.crosshair, self._deceleration) *
+                    self._weight_arrive)
+
+        if self._is_on(BehaviorType.WANDER):
+            self._steering_force += self._wander() * self._weight_wander
+
+        if self._is_on(BehaviorType.PURSUIT):
+            assert self._target_agent_1 is not None, ('Pursuit target not ' +
+                    'assigned')
+            self._steering_force += (self._pursuit(self._target_agent_1) *
+                    self._weight_pursuit)
+
+        if self._is_on(BehaviorType.OFFSET_PURSUIT):
+            assert self._target_agent_1 is not None, ('Pursuit target not ' +
+                    'assigned')
+            assert not self._offset.is_zero(), 'No offset assigned'
+
+            self._steering_force += (self._offset_pursuit(
+                        self._target_agent_1, self._offset) *
+                    self._weight_offset_pursuit)
+
+        if self._is_on(BehaviorType.INTERPOSE):
+            assert (self._target_agent_1 is not None and
+                    self._target_agent_2 is not None), ('Interpose agents ' +
+                        'not assigned')
+            self._steering_force += (self._interpose(
+                        self._target_agent_1, self._target_agent_2) *
+                    self._weight_interpose)
+
+        if self._is_on(BehaviorType.HIDE):
+            assert self._target_agent_1 is not None, ('Hide target not ' +
+                    'asssigned')
+            self._steering_force += (self._hide(self._target_agent_1,
+                        self._vehicle.world.obstacles) *
+                    self._weight_hide)
+
+        if self._is_on(BehaviorType.FOLLOW_PATH):
+            self._steering_force += (self._follow_path() *
+                    self._weight_follow_path)
+
+        return self._steering_force
+
+
 
     def _calculate_dithered(self):
         '''SteeringBehaviors._calculate_dithered(self) -> Vector2D
 
-        This method sums up the active behaviors by assigning a probabilty of
+        This method sums up the active behaviors by assigning a probability of
             being calculated to each behavior. It then tests the first
             priority to see if it should be calcukated this simulation-step.
             If so, it calculates the steering force resulting from this
@@ -854,4 +1560,154 @@ class SteeringBehaviors(object):
         NOTE: Not all of the behaviors have been implemented in this method,
             just a few, so you get the general idea.
         '''
-        raise NotImplementedError()
+        self._steering_force.zero = Vector2D()
+
+        if (self._is_on(BehaviorType.WALL_AVOIDANCE) and
+                random() < Config().probabilities.WALL_AVOIDANCE):
+            self._steering_force += (
+                    self._wall_avoidance(self._vehicle.world.walls) *
+                    (self._weight_wall_avoidance /
+                        Config().probabilities.WALL_AVOIDANCE)
+                    )
+            if not self._steering_force.is_zero():
+                self._steering_force.truncate_ip(self._vehicle.max_force)
+                return self._steering_force
+
+        if (self._is_on(BehaviorType.OBSTACLE_AVOIDANCE) and
+                random() < Config().probabilities.OBSTACLE_AVOIDANCE):
+            self._steering_force += (
+                    self._obstacle_avoidance(self._vehicle.world.obstacles) *
+                    (self._weight_obstacle_avoidance /
+                        Config().probabilities.OBSTACLE_AVOIDANCE)
+                    )
+            if not self._steering_force.is_zero():
+                self._steering_force.truncate_ip(self._vehicle.max_force)
+                return self._steering_force
+
+        if not self.is_space_partitioning_on():
+            if (self._is_on(BehaviorType.SEPARATION) and
+                    random() < Config().probabilities.SEPARATION):
+                self._steering_force += (
+                        self._separation(self._vehicle.world.agents) *
+                        (self._weight_separation /
+                            Config().probabilities.SEPARATION)
+                        )
+                if not self._steering_force.is_zero():
+                    self._steering_force.truncate_ip(self._vehicle.max_force)
+                    return self._steering_force
+        else:
+            if (self._is_on(BehaviorType.SEPARATION) and
+                    random() < Config().probabilities.SEPARATION):
+                self._steering_force += (
+                        self._separation_plus(self._vehicle.world.agents) *
+                        (self._weight_separation /
+                            Config().probabilities.SEPARATION)
+                        )
+                if not self._steering_force.is_zero():
+                    self._steering_force.truncate_ip(self._vehicle.max_force)
+                    return self._steering_force
+
+        if (self._is_on(BehaviorType.FLEE) and
+                random() < Config().probabilities.FLEE):
+            self._steering_force += (
+                    self._flee(self._vehicle.world.crosshair) *
+                    (self._weight_flee /
+                        Config().probabilities.FLEE)
+                    )
+            if not self._steering_force.is_zero():
+                self._steering_force.truncate_ip(self._vehicle.max_force)
+                return self._steering_force
+
+        if (self._is_on(BehaviorType.EVADE) and
+                random() < Config().probabilities.EVADE):
+            assert self._target_agent_1 is not None, ('Evade target not ' +
+                    'assigned')
+            self._steering_force += (
+                    self._evade(self._target_agent_1) *
+                    (self._weight_evade /
+                        Config().probabilities.EVADE)
+                    )
+            if not self._steering_force.is_zero():
+                self._steering_force.truncate_ip(self._vehicle.max_force)
+                return self._steering_force
+
+        if not self.is_space_partitioning_on():
+            if (self._is_on(BehaviorType.ALIGNMENT) and
+                    random() < Config().probabilities.ALIGNMENT):
+                self._steering_force += (
+                        self._alignment(self._vehicle.world.agents) *
+                        (self._weight_alignment /
+                            Config().probabilities.ALIGNMENT)
+                        )
+                if not self._steering_force.is_zero():
+                    self._steering_force.truncate_ip(self._vehicle.max_force)
+                    return self._steering_force
+
+            if (self._is_on(BehaviorType.COHESION) and
+                    random() < Config().probabilities.COHESION):
+                self._steering_force += (
+                        self._cohesion(self._vehicle.world.agents) *
+                        (self._weight_cohesion /
+                            Config().probabilities.COHESION)
+                        )
+                if not self._steering_force.is_zero():
+                    self._steering_force.truncate_ip(self._vehicle.max_force)
+                    return self._steering_force
+        else:
+            if (self._is_on(BehaviorType.ALIGNMENT) and
+                    random() < Config().probabilities.ALIGNMENT):
+                self._steering_force += (
+                        self._alignment_plus(self._vehicle.world.agents) *
+                        (self._weight_alignment /
+                            Config().probabilities.ALIGNMENT)
+                        )
+                if not self._steering_force.is_zero():
+                    self._steering_force.truncate_ip(self._vehicle.max_force)
+                    return self._steering_force
+
+            if (self._is_on(BehaviorType.COHESION) and
+                    random() < Config().probabilities.COHESION):
+                self._steering_force += (
+                        self._cohesion_plus(self._vehicle.world.agents) *
+                        (self._weight_cohesion /
+                            Config().probabilities.COHESION)
+                        )
+                if not self._steering_force.is_zero():
+                    self._steering_force.truncate_ip(self._vehicle.max_force)
+                    return self._steering_force
+
+        if (self._is_on(BehaviorType.WANDER) and
+                random() < Config().probabilities.WANDER):
+            self._steering_force += (
+                    self._wander() *
+                    (self._weight_wander /
+                        Config().probabilities.WANDER)
+                    )
+            if not self._steering_force.is_zero():
+                self._steering_force.truncate_ip(self._vehicle.max_force)
+                return self._steering_force
+
+        if (self._is_on(BehaviorType.SEEK) and
+                random() < Config().probabilities.SEEK):
+            self._steering_force += (
+                    self._seek(self._vehicle.world.crosshair) *
+                    (self._weight_seek /
+                        Config().probabilities.SEEK)
+                    )
+            if not self._steering_force.is_zero():
+                self._steering_force.truncate_ip(self._vehicle.max_force)
+                return self._steering_force
+
+        if (self._is_on(BehaviorType.ARRIVE) and
+                random() < Config().probabilities.ARRIVE):
+            self._steering_force += (
+                    self._arrive(self._vehicle.world.crosshair,
+                        self._deceleration) *
+                    (self._weight_arrive /
+                        Config().probabilities.ARRIVE)
+                    )
+            if not self._steering_force.is_zero():
+                self._steering_force.truncate_ip(self._vehicle.max_force)
+                return self._steering_force
+
+        return self._steering_force
