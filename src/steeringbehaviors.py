@@ -9,12 +9,12 @@ from .d2.vector2d import Vector2D
 from .path import Path
 from .utils import random_clamped
 from .d2.transformation import (
-    point_to_world_space,
-    point_to_local_space,
-    vector_to_world_space,
-    create_whiskers,
-    line_intersection_2d,
-    )
+        point_to_world_space,
+        point_to_local_space,
+        vector_to_world_space,
+        create_whiskers,
+        line_intersection_2d,
+        )
 
 # The radius of the constraining circle for the wander behavior
 WANDER_RADIUS = 1.2
