@@ -5,8 +5,8 @@ import math
 import json
 import pygame
 
-MAP_FILE = 'map_3rdflor.png'
-POINTS_FILE = 'map_3rd.json'
+MAP_FILE = 'edited_map_2nd.png'
+POINTS_FILE = 'map_2nd.json'
 WINDOW_WIDTH = 1280
 WINDOW_HEIGHT = 720
 FPS = 60

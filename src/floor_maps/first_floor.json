@@ -1,4 +1,5 @@
 {
+	"id": 1,
     "num_people": 100,
     "dim": {
         "width": 320,
@@ -1451,12 +1452,20 @@
 		{
 			"id": 0,
 			"from": 70,
-			"to": 73
+			"to": 73,
+			"dest": {
+				"map_id": 2,
+				"stair_id": 1
+			}
 		},
 		{
 			"id": 1,
-			"from": 86,
-			"to": 87
+			"from": 84,
+			"to": 86,
+			"dest": {
+				"map_id": 2,
+				"stair_id": 3
+			}
 		}
 	],
     "rooms": [
