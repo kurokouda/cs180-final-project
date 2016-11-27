@@ -45,7 +45,6 @@ class Main(object):
             for corner, floor in zip(BLIT_CORNERS, self._floors):
                 self._screen.blit(floor.render(), corner)
 
-            # self._screen.fill(pygame.Color('gray20'))
             pygame.display.flip()
         pygame.quit()
 
