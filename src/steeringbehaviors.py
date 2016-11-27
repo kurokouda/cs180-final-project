@@ -855,7 +855,23 @@ class SteeringBehaviors(object):
         Keyword arguments:
         neighbors -- collections.abc.Sequence<Wall2D>
         '''
-        raise NotImplementedError()
+        average_heading = Vector2D()
+        neighbor_count = 0
+
+        for neighbor in neighbors:
+            if (neighbor != self._vehicle and
+                        neighbor.is_tagged() and
+                    neighbor != self._target_agent_1):
+                average_heading += neighbor.heading
+                neighbor_count += 1
+
+        if neighbor_count > 0:
+            average_heading /= neighbor_count
+            average_heading -= self._vehicle.heading
+
+        return average_heading
+
+
 
     def _cohesion(self, neighbors):
         '''SteeringBehaviors._cohesion(self, neighbors) -> Vector2D
