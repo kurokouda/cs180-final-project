@@ -145,7 +145,7 @@ class GameWorld(object):
     def get_window_height(self):
         return self._window_height
 
-    wall = property(get_walls)
+    walls = property(get_walls)
     cell_space = property(get_cell_space)
     obstacles = property(get_obstacles)
     agents = property(get_agents)
