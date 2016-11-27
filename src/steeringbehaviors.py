@@ -855,16 +855,27 @@ class SteeringBehaviors(object):
         Keyword arguments:
         neighbors -- collections.abc.Sequence<Wall2D>
         '''
+        # used to record the average heading of the neighbors
         average_heading = Vector2D()
+
+        # used to count the number of vehicles in the neighborhood
         neighbor_count = 0
 
+        # iterate through all the tagged vehicles and sum their heading
+        # vectors
         for neighbor in neighbors:
+
+            # make sure *this* agent isn't included in the calculations and
+            # that the agent being examined  is close enough ***also make sure
+            # it doesn't include any evade target ***
             if (neighbor != self._vehicle and
                         neighbor.is_tagged() and
                     neighbor != self._target_agent_1):
                 average_heading += neighbor.heading
                 neighbor_count += 1
 
+        # if the neighborhood contained one or more vehicles, average their
+        # heading vectors.
         if neighbor_count > 0:
             average_heading /= neighbor_count
             average_heading -= self._vehicle.heading
