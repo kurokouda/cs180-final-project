@@ -213,7 +213,32 @@ class SteeringBehaviors(object):
             vehicle has left to apply and then applies that amount of the
             force to add.
         '''
-        raise NotImplementedError()
+        output = dict(has_force_left=False, running_total=copy(running_total))
+
+        # calculate how much steering force the vehicle has used so far
+        magnitude_so_far = running_total.length()
+
+        # calculate how much steering force remains to be used by this vehicle
+        magnitude_remaining = self._vehicle.max_force - magnitude_so_far
+
+        # return false if there is no more force left to use
+        if magnitude_remaining > 0:
+
+            # calculate the magnitude of the force we want to add
+            magnitude_to_add = force_to_add.length()
+            output['has_force_left'] = True
+
+            # if the magnitude of the sum of ForceToAdd and the running total
+            # does not exceed the maximum force available to this vehicle, just
+            # add together. Otherwise add as much of the ForceToAdd vector is
+            # possible without going over the max.
+            if magnitude_to_add < magnitude_remaining:
+                output['running_total'] += force_to_add
+            else:
+                output['running_total'] += (force_to_add.normalize() *
+                            magnitude_remaining)
+
+        return output
 
     def _create_feelers(self):
         '''Creates the antenna utilized by WallAvoidance
