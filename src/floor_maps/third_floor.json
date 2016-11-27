@@ -1481,6 +1481,7 @@
             "to": 140
         }
     ],
+    "safe_doors": [4],
     "triangles": [
         {
             "id": 0,

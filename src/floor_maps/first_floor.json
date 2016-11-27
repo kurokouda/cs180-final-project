@@ -1285,6 +1285,7 @@
     		"to": 26
     	}
     ],
+	"safe_doors": [8, 6, 5],
     "triangles": [
     	{
     		"id": 0,
