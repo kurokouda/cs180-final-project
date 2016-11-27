@@ -170,12 +170,21 @@ class Floor(GameWorld):
         self._default_surface.convert()
         self._default_surface.fill(pygame.Color('white'))
 
+        ## Uncomment to draw triangles
+        # for tri in self._triangles.values():
+        #     tri.draw(self._default_surface)
+
         for wall in self._walls.values():
             wall.draw(self._default_surface)
 
         for door in self._doors.values():
             door.draw(self._default_surface)
 
+        ## Uncomment to draw rooms
+        # for k, room in enumerate(self._rooms.values()):
+        #     if k == COUNT:
+        #         break
+        #     room.draw(self._default_surface)
 
     def get_walls(self):
         return self._walls.values()
