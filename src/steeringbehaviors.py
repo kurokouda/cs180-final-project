@@ -1135,7 +1135,16 @@ class SteeringBehaviors(object):
             'Seek' behavior to move to the next waypoint - unless it is the
             last waypoint, in which case it 'Arrives'.
         '''
-        raise NotImplementedError()
+        # move to next target if close enough to current target (working in
+        # distance squared space)
+        if (self._path.current_waypoint.distance_sq(self._vehicle.position) <
+                self._waypoint_seek_distance_sq):
+            self._path.set_next_waypoint()
+
+        if self._path.is_finished():
+            return self._seek(self._path.current_waypoint)
+
+        return self._arrive(self._path.current_waypoint, Deceleration.NORMAL)
 
 
 
