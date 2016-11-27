@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from collections.abc import Sequence
 from pprint import pprint
 
@@ -72,13 +73,13 @@ class Floor(GameWorld):
 
         point_scale = self._window_width / map_data['dim']['width']
 
-        points = {}
+        points = OrderedDict()
         for point_data in map_data['points']:
             x = point_data['x'] * point_scale
             y = point_data['y'] * point_scale
             points[point_data['id']] = Vector2D(x, y)
 
-        self._walls = {}
+        self._walls = OrderedDict()
         for wall_data in map_data['walls']:
             from_pt = points[wall_data['from']]
             to_pt = points[wall_data['to']]
@@ -86,7 +87,7 @@ class Floor(GameWorld):
             self._walls[instance_id] = (
                     Wall2D(from_pt, to_pt, instance_id=instance_id))
 
-        self._doors = {}
+        self._doors = OrderedDict()
         for door_data in map_data['doors']:
             from_pt = points[door_data['from']]
             to_pt = points[door_data['to']]
@@ -98,7 +99,7 @@ class Floor(GameWorld):
                 self._doors[instance_id] = Door2D(from_pt, to_pt,
                     instance_id=instance_id)
 
-        self._triangles = {}
+        self._triangles = OrderedDict()
         for tri_data in map_data['triangles']:
             instance_id = tri_data['id']
             tri_points = tuple(points[i] for i in tri_data['points'])
