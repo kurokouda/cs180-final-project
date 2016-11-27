@@ -13,6 +13,7 @@ from .d2.transformation import (
     point_to_local_space,
     vector_to_world_space,
     create_whiskers,
+    line_intersection_2d,
     )
 
 # The radius of the constraining circle for the wander behavior
@@ -777,7 +778,49 @@ class SteeringBehaviors(object):
         Keyword arguments:
         walls -- collections.abc.Sequence<Wall2D>
         '''
-        raise NotImplementedError()
+        # the feelers are contained in a list self._feelers
+        self._create_feelers()
+        dist_to_closest_ip = float_info.max
+
+        # this will hold an index into the vector of walls
+        closest_wall = None
+        steering_force = Vector2D()
+        closest_ip = Vector2D()
+
+        # examine each feeler in turn
+        for feeler in self._feelers:
+
+            # run through each wall checking for any intersection points
+            for wall in walls:
+                lines = line_intersection_2d(
+                        self._vehicle.position,
+                        feeler,
+                        wall.from_pt,
+                        wall.to_pt)
+                if lines['has_ip']:
+
+                    # is this the closest found so far? If so keep a record
+                    if lines['dist_to_ip'] < dist_to_closest_ip:
+                        closest_wall = wall
+                        closest_ip = lines['ip']
+
+            # if an intersection point has been detected, calculate a force
+            # that will direct the agent away
+            if closest_wall is not None:
+
+                # calculate by what distance the projected position of the
+                # agent will overshoot the wall
+                overshoot = feeler - closest_ip
+
+                # create a force in the direction of the wall normal, with a
+                # magnitude of the overshoot
+                steering_force = closest_wall.normal * overshoot.length()
+
+        return steering_force
+
+
+
+
 
     def _separation(self, neighbors):
         '''SteeringBehaviors._separation(self, neighbors) -> Vector2D
