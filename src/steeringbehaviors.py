@@ -1158,7 +1158,24 @@ class SteeringBehaviors(object):
         leader -- Vehicle
         offset -- Vector2D
         '''
-        raise NotImplementedError()
+        # calculate the offset's position in world space
+        world_offset_pos = point_to_world_space(
+                point=offset,
+                agent_heading=leader.heading,
+                agent_side=leader.side,
+                agent_position=leader.position)
+
+        to_offset = world_offset_pos - self._vehicle.pos
+
+        # the lookahead time is propotional to the distance between the leader
+        # and the pursuer; and is inversely proportional to the sum of both
+        # agent's velocities
+        look_ahead_time = (to_offset.length() /
+                (self._vehicle.max_speed + leader.speed))
+
+        # now Arrive at the predicted future position of the offset
+        return self._arrive(world_offset_pos +
+                (leader.velocity * look_ahead_time), Deceleration.FAST)
 
 
 
