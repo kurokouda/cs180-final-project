@@ -98,6 +98,15 @@ class Floor(GameWorld):
                 self._doors[instance_id] = Door2D(from_pt, to_pt,
                     instance_id=instance_id)
 
+        self._triangles = {}
+        for tri_data in map_data['triangles']:
+            instance_id = tri_data['id']
+            tri_points = tuple(points[i] for i in tri_data['points'])
+            self._triangles[instance_id] = Triangle2D(*tri_points, instance_id)
+
+
+
+
         self._default_surface = pygame.Surface((self._window_width,
                 self._window_height))
         self._default_surface.convert()
