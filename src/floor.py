@@ -72,17 +72,20 @@ class Floor(GameWorld):
 
         point_scale = self._window_width / map_data['dim']['width']
 
-        points = dict()
+        points = {}
         for point_data in map_data['points']:
             x = point_data['x'] * point_scale
             y = point_data['y'] * point_scale
             points[point_data['id']] = Vector2D(x, y)
 
+        self._walls = {}
         for wall_data in map_data['walls']:
             from_pt = points[wall_data['from']]
             to_pt = points[wall_data['to']]
             instance_id = wall_data['id']
-            self._walls.append(Wall2D(from_pt, to_pt, instance_id=instance_id))
+            self._walls[instance_id] = (
+                    Wall2D(from_pt, to_pt, instance_id=instance_id))
+
 
         self._default_surface = pygame.Surface((self._window_width,
                 self._window_height))
