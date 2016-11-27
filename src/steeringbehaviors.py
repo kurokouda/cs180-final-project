@@ -820,8 +820,6 @@ class SteeringBehaviors(object):
 
 
 
-
-
     def _separation(self, neighbors):
         '''SteeringBehaviors._separation(self, neighbors) -> Vector2D
 
@@ -845,6 +843,8 @@ class SteeringBehaviors(object):
                 # distance from its neighbor.
                 steering_force += to_agent.normalize() / to_agent.length()
         return steering_force
+
+
 
     def _alignment(self, neighbors):
         '''SteeringBehaviors._alignment(self, neighbors) -> Vector2D
@@ -924,8 +924,10 @@ class SteeringBehaviors(object):
         return steering_force.normalize()
 
 
+
     # NOTE: The next three behaviors are the same as the above three, except
     #   that they use a cell-space partition to find the neighbors
+
 
 
     def _separation_plus(self, neighbors):
@@ -1024,6 +1026,8 @@ class SteeringBehaviors(object):
         # allignment so it usually helps to normalize it.
         return steering_force.normalize()
 
+
+
     def _interpose(self, agent_a, agent_b):
         '''SteeringBehaviors._interpose(self, agent_a, agent_b) -> Vector2D
 
@@ -1051,6 +1055,8 @@ class SteeringBehaviors(object):
 
         # then steer to Arrive at it
         return self._arrive(mid_point, Deceleration.FAST)
+
+
 
     def _hide(self, hunter, obstacles):
         '''SteeringBehaviors._hide(self, hunter, obstacles) -> Vector2D
@@ -1090,6 +1096,8 @@ class SteeringBehaviors(object):
         '''
         raise NotImplementedError()
 
+
+
     def _offset_pursuit(self, leader, offset):
         '''SteeringBehaviors._offset_pursuit(leader, offset) -> Vector2D
 
@@ -1103,6 +1111,7 @@ class SteeringBehaviors(object):
         raise NotImplementedError()
 
 
+
     def calculate(self):
         '''SteeringBehaviors.calculate(self) -> Vector2D
 
@@ -1111,6 +1120,8 @@ class SteeringBehaviors(object):
         '''
         raise NotImplementedError()
 
+
+
     def forward_component(self):
         '''SteeringBehaviors.forward_component(self) -> Vector2D
 
@@ -1118,12 +1129,16 @@ class SteeringBehaviors(object):
         '''
         raise NotImplementedError()
 
+
+
     def side_component(self):
         '''SteeringBehaviors.side_component(self) -> Vector2D
 
         Returns the side component of the steering force
         '''
         raise NotImplementedError()
+
+
 
     def _calculate_prioritized(self):
         '''SteeringBehaviors.calculate_prioritized(self) -> Vector2D
@@ -1136,6 +1151,7 @@ class SteeringBehaviors(object):
         raise NotImplementedError()
 
 
+
     def _calculate_weighted_sum(self):
         '''SteeringBehaviors.calculate_weighted_sum(self) -> Vector2D
 
@@ -1144,6 +1160,8 @@ class SteeringBehaviors(object):
             returning.
         '''
         raise NotImplementedError()
+
+
 
     def _calculate_dithered(self):
         '''SteeringBehaviors._calculate_dithered(self) -> Vector2D
