@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from pprint import pprint
 
 import pygame
@@ -31,6 +32,31 @@ class ExitDoor2D(Door2D, object):
     __slots__ = Door2D.__slots__
     DOOR_COLOR = pygame.Color('darkgreen')
 
+class Triangle2D(Sequence):
+    __slots__ = ('_points', '_id')
+    def __init__(self, a, b, c, id_):
+        self._id = id_
+        self._points = (Vector2D.make_int(a), Vector2D.make_int(b),
+                Vector2D.make_int(c))
+
+    def __getitem__(self, key):
+        assert isinstance(key, int), "Key should be of type 'int'"
+        assert key >= 0 and key < 3, "Index out of bounds"
+        return self._points[key]
+
+    def __len__(self):
+        return 3
+
+    def __repr__(self):
+        return '<Tringle [{}]>'.format(', '.join(
+                [str(tuple(v)) for v in self._points]))
+
+    @property
+    def instance_id(self):
+        return self._id
+
+    def draw(self, surface):
+        pygame.draw.polygon(surface, pygame.Color('gray20'), self._points, 1)
 
 class Floor(GameWorld):
 
