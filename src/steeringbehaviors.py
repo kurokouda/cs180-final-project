@@ -963,7 +963,30 @@ class SteeringBehaviors(object):
         Keyword arguments:
         neighbors -- collections.abc.Sequence<Wall2D>
         '''
-        raise NotImplementedError()
+        # this will record the average heading of the neighbors
+        average_heading = Vector2D()
+
+        # This count the number of vehicles in the neighborhood
+        neighbor_count = 0
+
+        # iterate through the neighbors and sum up all the position vectors
+        for neighbor in self._vehicle.world.cell_space:
+
+            # make sure *this* agent isn't included in the calculations and
+            # that the agent being examined  is close enough
+            if neighbor != self._vehicle:
+                average_heading += neighbor.heading
+                neighbor_count += 1
+
+        # if the neighborhood contained one or more vehicles, average their
+        # heading vectors
+        if neighbor_count > 0:
+            average_heading /= neighbor_count
+            average_heading -= self._vehicle.heading
+
+        return average_heading
+
+
 
     def _cohesion_plus(self, neighbors):
         '''SteeringBehaviors._cohesion_plus(self, neighbors) -> Vector2D
