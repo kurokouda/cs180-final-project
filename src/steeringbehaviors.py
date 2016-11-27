@@ -998,7 +998,20 @@ class SteeringBehaviors(object):
         Keyword arguments:
         neighbors -- collections.abc.Sequence<Wall2D>
         '''
-        raise NotImplementedError()
+        center_of_mass = Vector2D()
+        steering_force = Vector2D()
+        neighbor_count = 0
+
+        for neighbor in self._vehicle.world.cell_space:
+            if neighbor != self._vehicle:
+                center_of_mass += neighbor.position
+                neighbor_count += 1
+
+        if neighbor_count > 0:
+            center_of_mass /= neighbor_count
+            steering_force = self._seek(center_of_mass)
+
+        return steering_force.normalize()
 
     def _interpose(self, agent_a, agent_b):
         '''SteeringBehaviors._interpose(self, agent_a, agent_b) -> Vector2D
