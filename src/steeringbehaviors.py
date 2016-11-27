@@ -1683,14 +1683,3 @@ class SteeringBehaviors(object):
                 return self._steering_force
 
         return self._steering_force
-
-        # if (self._is_on(BehaviorType.) and
-        #         random() < Config().probabilities.):
-        #     self._steering_force += (
-        #             self._() *
-        #             (self._weight_ /
-        #                 Config().probabilities.)
-        #             )
-        #     if not self._steering_force.is_zero():
-        #         self._steering_force.truncate_ip(self._vehicle.max_force)
-        #         return self._steering_force
