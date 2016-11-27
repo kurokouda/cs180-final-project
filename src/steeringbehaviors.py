@@ -256,7 +256,8 @@ class SteeringBehaviors(object):
                     facing=facing,
                     origin=origin))
 
-
+    def _is_on(self, behavior):
+        return (self._flags & behavior) == behavior
 
     def flee_on(self):
         self._flags |= BehaviorType.FLEE
