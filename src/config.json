@@ -6,17 +6,13 @@
     },
 
     "maps": {
-        "directory": "floor_maps",
-        "names": [
+        "DIRECTORY": "floor_maps",
+        "FILENAMES": [
             "first_floor.json",
             "second_floor.json",
             "third_floor.json"
         ]
     },
-
-    "NUM_AGENTS": 300,
-    "NUM_FLOORS": 3,
-    "_NUM_AGENTS": [ 100, 40, 20 ],
     "NUM_CELLS_X": 7,
     "NUM_CELLS_Y": 7,
 
