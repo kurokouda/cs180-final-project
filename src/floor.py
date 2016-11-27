@@ -111,10 +111,14 @@ class Floor(GameWorld):
                 self._window_height))
         self._default_surface.convert()
         self._default_surface.fill(pygame.Color('white'))
-        for wall in self._walls:
+
+        for wall in self._walls.values():
             wall.draw(self._default_surface)
 
-        pprint(self._walls)
+        for door in self._doors.values():
+            door.draw(self._default_surface)
+
+
 
     def _set_cell_space(self):
         self._cell_space = CellSpacePartition(
