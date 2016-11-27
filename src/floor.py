@@ -119,6 +119,10 @@ class Floor(GameWorld):
             door.draw(self._default_surface)
 
 
+    def get_walls(self):
+        return self._walls.values()
+
+    walls = property(get_walls)
 
     def _set_cell_space(self):
         self._cell_space = CellSpacePartition(
