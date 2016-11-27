@@ -60,7 +60,11 @@ class Triangle2D(Sequence):
 
 class Floor(GameWorld):
 
+    instances = {}
+
     def __init__(self, map_data):
+        Floor.instances[map_data['id']] = self
+        self._id = map_data['id']
         self._num_people = map_data['num_people']
         self._cell_space = None
         super().__init__(Config().window.WIDTH // 2,
