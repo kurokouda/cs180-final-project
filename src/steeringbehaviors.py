@@ -13,8 +13,8 @@ from .d2.transformation import (
         point_to_local_space,
         vector_to_world_space,
         create_whiskers,
-        line_intersection_2d,
         )
+from .d2.geometry import line_intersection_2d
 
 # The radius of the constraining circle for the wander behavior
 WANDER_RADIUS = 1.2
