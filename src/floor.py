@@ -174,17 +174,18 @@ class Floor(GameWorld):
         # for tri in self._triangles.values():
         #     tri.draw(self._default_surface)
 
-        for wall in self._walls.values():
-            wall.draw(self._default_surface)
+        # for wall in self._walls.values():
+        #     wall.draw(self._default_surface)
 
-        for door in self._doors.values():
-            door.draw(self._default_surface)
+        # for door in self._doors.values():
+        #     door.draw(self._default_surface)
 
         ## Uncomment to draw rooms
-        # for k, room in enumerate(self._rooms.values()):
-        #     if k == COUNT:
-        #         break
-        #     room.draw(self._default_surface)
+        COUNT = 14
+        for k, room in enumerate(self._rooms.values()):
+            if k == COUNT:
+                room.draw(self._default_surface)
+                break
 
     def get_walls(self):
         return self._walls.values()
