@@ -15,6 +15,22 @@ class Wall2D(wall2d.Wall2D):
         pygame.draw.line(surface, pygame.Color('black'), self._from_pt,
                 self._to_pt, 2)
 
+class Door2D(wall2d.Wall2D, object):
+    __slots__ = wall2d.Wall2D.__slots__
+    DOOR_COLOR = pygame.Color('orange')
+
+    @property
+    def center(self):
+        return (self._from_pt + self._to_pt) // 2
+
+    def draw(self, surface):
+        center = (int(self.center.x), int(self.center.y))
+        pygame.draw.circle(surface, type(self).DOOR_COLOR, center, 2)
+
+class ExitDoor2D(Door2D, object):
+    __slots__ = Door2D.__slots__
+    DOOR_COLOR = pygame.Color('darkgreen')
+
 
 class Floor(GameWorld):
 
