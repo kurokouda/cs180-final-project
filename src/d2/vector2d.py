@@ -35,6 +35,12 @@ class Vector2D(Sized, Iterable, Hashable, Container):
         Vector2D.wrap_around_ip(new_vec, max_x, max_y)
         return new_vec
 
+    @staticmethod
+    def make_int(vec):
+        new_vec = Vector2D.from_vec(vec)
+        new_vec.x = int(vec.x)
+        new_vec.y = int(vec.y)
+        return new_vec
 
     @staticmethod
     def inside_region_vec(vec, vec_top_left, vec_bottom_right):
