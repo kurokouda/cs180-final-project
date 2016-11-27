@@ -1229,7 +1229,7 @@ class SteeringBehaviors(object):
 
         Returns the side component of the steering force
         '''
-        raise NotImplementedError()
+        return self._vehicle.side * self._steering_force
 
 
 
