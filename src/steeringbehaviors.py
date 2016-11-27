@@ -1220,7 +1220,7 @@ class SteeringBehaviors(object):
 
         Returns the forward component of the steering force.
         '''
-        raise NotImplementedError()
+        return self._vehicle.heading * self._steering_force
 
 
 
