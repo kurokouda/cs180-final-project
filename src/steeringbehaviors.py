@@ -1068,7 +1068,36 @@ class SteeringBehaviors(object):
         hunter -- Vehicle
         obstacles -- collections.abc.Sequence<BaseGameEntity>
         '''
-        raise NotImplementedError()
+        dist_to_closest = float_info.max
+        best_hiding_spot = Vector2D()
+        # closest = None
+
+        for current_obstacle in obstacles:
+
+            # calculate the position of the hiding spot for this obstacle
+            hiding_spot = self._get_hiding_position(
+                    current_obstacle.position,
+                    current_obstacle.bounding_radius,
+                    hunter.position
+                    )
+
+            # work in distance-squared space to find the closest hiding
+            # spot to the age
+            dist_sq = hiding_spot.distance_sq(self._vehicle.position)
+            if dist_sq < dist_to_closest:
+                dist_to_closest = dist_sq
+                best_hiding_spot = hiding_spot
+                # closest = current_obstacle
+
+        # if no suitable obstacles found then Evade the hunter
+        if dist_to_closest == float_info.max:
+            return self._evade(hunter)
+
+        # else use Arrive on the hiding spot
+        return self._arrive(best_hiding_spot, Deceleration.FAST)
+
+
+
 
     def _get_hiding_position(self, pos_ob, radius_ob, pos_hunter):
         '''SteeringBehaviors._get_hiding_position(self, pos_ob, radius_ob,
@@ -1084,7 +1113,19 @@ class SteeringBehaviors(object):
         radius -- numers.Real
         pos_hunter -- Vector2D
         '''
-        raise NotImplementedError()
+        # calculate how far away the agent is to be from the chosen obstacle's
+        # bounding radius
+        distance_from_boundary = 30.0
+        dist_away = radius_ob + distance_from_boundary
+
+        # calculate the heading toward the object from the hunter
+        to_ob = (pos_ob - pos_hunter).normalize()
+
+        # scale it to size and add to the obstacles position to get
+        # the hiding spot.
+        return (to_ob * dist_away) + pos_ob
+
+
 
     def _follow_path(self):
         '''SteeringBehaviors._follow_path(self) -> Vector2D
