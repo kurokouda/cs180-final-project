@@ -1211,7 +1211,35 @@ class SteeringBehaviors(object):
         Calculates the accumulated steering force according to the method set
             in self._summing_method.
         '''
-        raise NotImplementedError()
+        self._steering_force.zero()
+
+        if not self.is_space_partitioning_on():
+            if (self._is_on(BehaviorType.SEPARATION) or
+                    self._is_on(BehaviorType.ALIGNMENT) or
+                    self._is_on(BehaviorType.COHESION)):
+                self._vehicle.world.tag_vehicles_within_view_range(
+                        self._vehicle,
+                        self._view_distance
+                        )
+        else:
+            if (self._is_on(BehaviorType.SEPARATION) or
+                    self._is_on(BehaviorType.ALIGNMENT) or
+                    self._is_on(BehaviorType.COHESION)):
+                self._vehicle.world.cell_space.calculate_neighbors(
+                        self._vehicle.position,
+                        self._view_distance
+                        )
+
+        if self._summing_method == SummingMethod.WEIGHTED_AVERAGE:
+            self._steering_force = self._calculate_weighted_sum()
+        elif self._summing_method == SummingMethod.PRIORITIZED:
+            self._steering_force = self._calculate_prioritized()
+        elif self._summing_method == SummingMethod.DITHERED:
+            self._steering_force = self._calculate_dithered()
+        else:
+            self._steering_force = Vector2D()
+
+        return self._steering_force
 
 
 
