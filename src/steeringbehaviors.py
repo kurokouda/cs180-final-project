@@ -893,7 +893,35 @@ class SteeringBehaviors(object):
         Keyword arguments:
         neighbors -- collections.abc.Sequence<Wall2D>
         '''
-        raise NotImplementedError()
+        # first find the center of mass of all the agents
+        center_of_mass = Vector2D()
+        neighbor_count = 0
+
+        # iterate through all the tagged vehicles and sum their heading
+        # vectors
+        for neighbor in neighbors:
+
+            # make sure *this* agent isn't included in the calculations and
+            # that the agent being examined  is close enough ***also make sure
+            # it doesn't include any evade target ***
+            if (neighbor != self._vehicle and
+                        neighbor.is_tagged() and
+                    neighbor != self._target_agent_1):
+                center_of_mass += neighbor.position
+                neighbor_count += 1
+
+        steering_force = Vector2D()
+        if neighbor_count > 0:
+
+            # the center of mass is the average of the sum of positions
+            center_of_mass /= neighbor_count
+
+            # now seek towards that position
+            steering_force = self._seek(center_of_mass)
+
+        # the magnitude of cohesion is usually much larger than separation or
+        # allignment so it usually helps to normalize it.
+        return steering_force.normalize()
 
 
     # NOTE: The next three behaviors are the same as the above three, except
