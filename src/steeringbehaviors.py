@@ -1521,7 +1521,7 @@ class SteeringBehaviors(object):
     def _calculate_dithered(self):
         '''SteeringBehaviors._calculate_dithered(self) -> Vector2D
 
-        This method sums up the active behaviors by assigning a probabilty of
+        This method sums up the active behaviors by assigning a probability of
             being calculated to each behavior. It then tests the first
             priority to see if it should be calcukated this simulation-step.
             If so, it calculates the steering force resulting from this
@@ -1532,4 +1532,165 @@ class SteeringBehaviors(object):
         NOTE: Not all of the behaviors have been implemented in this method,
             just a few, so you get the general idea.
         '''
-        raise NotImplementedError()
+        self._steering_force.zero = Vector2D()
+
+        if (self._is_on(BehaviorType.WALL_AVOIDANCE) and
+                random() < Config().probabilities.WALL_AVOIDANCE):
+            self._steering_force += (
+                    self._wall_avoidance(self._vehicle.world.walls) *
+                    (self._weight_wall_avoidance /
+                        Config().probabilities.WALL_AVOIDANCE)
+                    )
+            if not self._steering_force.is_zero():
+                self._steering_force.truncate_ip(self._vehicle.max_force)
+                return self._steering_force
+
+        if (self._is_on(BehaviorType.OBSTACLE_AVOIDANCE) and
+                random() < Config().probabilities.OBSTACLE_AVOIDANCE):
+            self._steering_force += (
+                    self._obstacle_avoidance(self._vehicle.world.obstacles) *
+                    (self._weight_obstacle_avoidance /
+                        Config().probabilities.OBSTACLE_AVOIDANCE)
+                    )
+            if not self._steering_force.is_zero():
+                self._steering_force.truncate_ip(self._vehicle.max_force)
+                return self._steering_force
+
+        if not self.is_space_partitioning_on():
+            if (self._is_on(BehaviorType.SEPARATION) and
+                    random() < Config().probabilities.SEPARATION):
+                self._steering_force += (
+                        self._separation(self._vehicle.world.agents) *
+                        (self._weight_separation /
+                            Config().probabilities.SEPARATION)
+                        )
+                if not self._steering_force.is_zero():
+                    self._steering_force.truncate_ip(self._vehicle.max_force)
+                    return self._steering_force
+        else:
+            if (self._is_on(BehaviorType.SEPARATION) and
+                    random() < Config().probabilities.SEPARATION):
+                self._steering_force += (
+                        self._separation_plus(self._vehicle.world.agents) *
+                        (self._weight_separation /
+                            Config().probabilities.SEPARATION)
+                        )
+                if not self._steering_force.is_zero():
+                    self._steering_force.truncate_ip(self._vehicle.max_force)
+                    return self._steering_force
+
+        if (self._is_on(BehaviorType.FLEE) and
+                random() < Config().probabilities.FLEE):
+            self._steering_force += (
+                    self._flee(self._vehicle.world.crosshair) *
+                    (self._weight_flee /
+                        Config().probabilities.FLEE)
+                    )
+            if not self._steering_force.is_zero():
+                self._steering_force.truncate_ip(self._vehicle.max_force)
+                return self._steering_force
+
+        if (self._is_on(BehaviorType.EVADE) and
+                random() < Config().probabilities.EVADE):
+            assert self._target_agent_1 is not None, ('Evade target not ' +
+                    'assigned')
+            self._steering_force += (
+                    self._evade(self._target_agent_1) *
+                    (self._weight_evade /
+                        Config().probabilities.EVADE)
+                    )
+            if not self._steering_force.is_zero():
+                self._steering_force.truncate_ip(self._vehicle.max_force)
+                return self._steering_force
+
+        if not self.is_space_partitioning_on():
+            if (self._is_on(BehaviorType.ALIGNMENT) and
+                    random() < Config().probabilities.ALIGNMENT):
+                self._steering_force += (
+                        self._alignment(self._vehicle.world.agents) *
+                        (self._weight_alignment /
+                            Config().probabilities.ALIGNMENT)
+                        )
+                if not self._steering_force.is_zero():
+                    self._steering_force.truncate_ip(self._vehicle.max_force)
+                    return self._steering_force
+
+            if (self._is_on(BehaviorType.COHESION) and
+                    random() < Config().probabilities.COHESION):
+                self._steering_force += (
+                        self._cohesion(self._vehicle.world.agents) *
+                        (self._weight_cohesion /
+                            Config().probabilities.COHESION)
+                        )
+                if not self._steering_force.is_zero():
+                    self._steering_force.truncate_ip(self._vehicle.max_force)
+                    return self._steering_force
+        else:
+            if (self._is_on(BehaviorType.ALIGNMENT) and
+                    random() < Config().probabilities.ALIGNMENT):
+                self._steering_force += (
+                        self._alignment_plus(self._vehicle.world.agents) *
+                        (self._weight_alignment /
+                            Config().probabilities.ALIGNMENT)
+                        )
+                if not self._steering_force.is_zero():
+                    self._steering_force.truncate_ip(self._vehicle.max_force)
+                    return self._steering_force
+
+            if (self._is_on(BehaviorType.COHESION) and
+                    random() < Config().probabilities.COHESION):
+                self._steering_force += (
+                        self._cohesion_plus(self._vehicle.world.agents) *
+                        (self._weight_cohesion /
+                            Config().probabilities.COHESION)
+                        )
+                if not self._steering_force.is_zero():
+                    self._steering_force.truncate_ip(self._vehicle.max_force)
+                    return self._steering_force
+
+        if (self._is_on(BehaviorType.WANDER) and
+                random() < Config().probabilities.WANDER):
+            self._steering_force += (
+                    self._wander() *
+                    (self._weight_wander /
+                        Config().probabilities.WANDER)
+                    )
+            if not self._steering_force.is_zero():
+                self._steering_force.truncate_ip(self._vehicle.max_force)
+                return self._steering_force
+
+        if (self._is_on(BehaviorType.SEEK) and
+                random() < Config().probabilities.SEEK):
+            self._steering_force += (
+                    self._seek(self._vehicle.world.crosshair) *
+                    (self._weight_seek /
+                        Config().probabilities.SEEK)
+                    )
+            if not self._steering_force.is_zero():
+                self._steering_force.truncate_ip(self._vehicle.max_force)
+                return self._steering_force
+
+        if (self._is_on(BehaviorType.ARRIVE) and
+                random() < Config().probabilities.ARRIVE):
+            self._steering_force += (
+                    self._arrive(self._vehicle.world.crosshair,
+                        self._deceleration) *
+                    (self._weight_arrive /
+                        Config().probabilities.ARRIVE)
+                    )
+            if not self._steering_force.is_zero():
+                self._steering_force.truncate_ip(self._vehicle.max_force)
+                return self._steering_force
+
+        return self._steering_force
+
+        # if (self._is_on(BehaviorType.) and
+        #         random() < Config().probabilities.):
+        #     self._steering_force += (
+        #             self._() *
+        #             (self._weight_ /
+        #                 Config().probabilities.)
+        #             )
+        #     if not self._steering_force.is_zero():
+        #         self._steering_force.truncate_ip(self._vehicle.max_force)
+        #         return self._steering_force
