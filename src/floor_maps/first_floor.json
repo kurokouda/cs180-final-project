@@ -1,4 +1,9 @@
 {
+    "num_people": 100,
+    "dim": {
+        "width": 320,
+        "height": 180
+    },
     "points": [
         {
             "id": 0,
