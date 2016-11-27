@@ -153,7 +153,16 @@ class Floor(GameWorld):
             tri_points = tuple(points[i] for i in tri_data['points'])
             self._triangles[instance_id] = Triangle2D(*tri_points, instance_id)
 
-
+        self._rooms = OrderedDict()
+        for room_data in map_data['rooms']:
+            instance_id = room_data['id']
+            self._rooms[instance_id] = Room(
+                    tuple(self._walls[k] for k in room_data['wall_ids']),
+                    tuple(self._doors[k] for k in room_data['door_ids']),
+                    tuple(self._triangles[k]
+                        for k in room_data['triangle_ids']),
+                    instance_id
+                    )
 
 
         self._default_surface = pygame.Surface((self._window_width,
