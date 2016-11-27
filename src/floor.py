@@ -60,6 +60,53 @@ class Triangle2D(Sequence):
         pygame.draw.aalines(surface, pygame.Color(200, 200, 200), True,
             self._points)
 
+
+class Room(object):
+    __slots__ = (
+            '_id',
+            '_walls',
+            '_doors',
+            '_triangles',
+            )
+
+    def __init__(self, walls=(), doors=(), triangles=(), id_=0):
+        self._walls = walls
+        self._doors = doors
+        self._triangles = triangles
+        self._id = id_
+
+    @property
+    def walls(self):
+        return self._walls
+
+    @property
+    def doors(self):
+        return self._doors
+
+    @property
+    def triangles(self):
+        return self._triangles
+
+    @property
+    def instance_id(self):
+        return self._id
+
+    @property
+    def name(self):
+        return self._id
+
+    def __repr__(self):
+        return '<Room:{}>'.format(self._id)
+
+    def draw(self, surface):
+        for tri in self._triangles:
+            tri.draw(surface)
+        for wall in self._walls:
+            wall.draw(surface)
+        for door in self._doors:
+            door.draw(surface)
+
+
 class Floor(GameWorld):
 
     instances = {}
