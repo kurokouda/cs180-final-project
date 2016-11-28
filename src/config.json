@@ -13,8 +13,8 @@
             "third_floor.json"
         ]
     },
-    "NUM_CELLS_X": 7,
-    "NUM_CELLS_Y": 7,
+    "NUM_CELLS_X": 30,
+    "NUM_CELLS_Y": 18,
 
 
 
@@ -29,9 +29,9 @@
         "This is used to multiply the steering force AND all the",
         "multipliers found in SteeringBehavior"
     ],
-    "STEERING_FORCE_TWEAKER": 200.0,
+    "STEERING_FORCE_TWEAKER": 10.0,
     "STEERING_FORCE": 2.0,
-    "MAX_SPEED": 100.0,
+    "MAX_SPEED": 2.0,
     "VEHICLE_MASS": 1.0,
     "VEHICLE_SCALE": 1.0,
 
