@@ -214,11 +214,11 @@ class Floor(GameWorld):
         # for tri in self._triangles.values():
         #     tri.draw(self._default_surface)
 
-        # for wall in self._walls.values():
-        #     wall.draw(self._default_surface)
+        for wall in self._walls.values():
+            wall.draw(self._default_surface)
 
-        # for door in self._doors.values():
-        #     door.draw(self._default_surface)
+        for door in self._doors.values():
+            door.draw(self._default_surface)
 
         ## Uncomment to draw rooms
         # COUNT = 0
