@@ -207,15 +207,11 @@ class Floor(GameWorld):
             door.draw(self._default_surface)
 
         ## Uncomment to draw rooms
+        # COUNT = 0
         # for k, room in enumerate(self._rooms.values()):
         #     if k == COUNT:
+        #         room.draw(self._default_surface)
         #         break
-        #     room.draw(self._default_surface)
-
-    def get_walls(self):
-        return self._walls.values()
-
-    walls = property(get_walls)
 
     def _set_cell_space(self):
         self._cell_space = CellSpacePartition(
@@ -230,3 +226,6 @@ class Floor(GameWorld):
         floor_surface = pygame.Surface.copy(self._default_surface)
 
         return floor_surface
+
+    def update(self, time_elapsed):
+        pass
