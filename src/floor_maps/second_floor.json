@@ -1664,7 +1664,7 @@
         {
             "id": "cnn1",
             "wall_ids": [ 27, 29, 30, 31, 32 ],
-            "door_ids": [ 9 ],
+            "door_ids": [ 8 ],
             "triangle_ids": [ 13, 14 ]
         },
 
@@ -1714,7 +1714,7 @@
 
         {
             "id": "lab2",
-            "wall_ids": [ 75, 75, 77, 78, 79 ],
+            "wall_ids": [ 75, 76, 77, 78, 79 ],
             "door_ids": [ 17 ],
             "triangle_ids": [ 27, 28 ]
         },
@@ -1735,23 +1735,23 @@
 
         {
             "id": "men_cr",
-            "wall_ids": [ 89, 90, 91, 92 ],
+            "wall_ids": [ 88, 89, 90, 91, 92 ],
             "door_ids": [ 20 ],
-            "triangle_ids": [ 31, 32 ]
+            "triangle_ids": [ 33, 34 ]
         },
 
         {
             "id": "cnn2",
             "wall_ids": [ 93, 94, 95, 96, 97 ],
             "door_ids": [ 21 ],
-            "triangle_ids": [ 33, 34 ]
+            "triangle_ids": [ 35, 36 ]
         },
 
         {
             "id": "er2",
             "wall_ids": [ 97, 98, 99, 100, 101 ],
             "door_ids": [ 22 ],
-            "triangle_ids": [ 35, 36 ]
+            "triangle_ids": [ 37, 38 ]
         },
         {
             "id": "hallway",
