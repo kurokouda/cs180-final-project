@@ -246,6 +246,20 @@ class Vector2D(Sized, Iterable, Hashable, Container):
         else:
             return NotImplemented
 
+    # def __div__(self, other):
+    #     if isinstance(other, Real):
+    #         return Vector2D(self._x / other, self._y / other)
+    #     else:
+    #         return NotImplemented
+    #
+    # def __idiv__(self, other):
+    #     if isinstance(other, Real):
+    #         self._x /= other
+    #         self._y /= other
+    #         return self
+    #     else:
+    #         return NotImplemented
+
     def __truediv__(self, other):
         if isinstance(other, Real):
             return Vector2D(self._x / other, self._y / other)
