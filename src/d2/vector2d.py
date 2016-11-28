@@ -210,6 +210,7 @@ class Vector2D(Sized, Iterable, Hashable, Container):
             return NotImplemented
         self._x += other.x
         self._y += other.y
+        return self
 
     def __sub__(self, other):
         if not isinstance(other, Vector2D):
@@ -221,6 +222,7 @@ class Vector2D(Sized, Iterable, Hashable, Container):
             return NotImplemented
         self._x -= other.x
         self._y -= other.y
+        return self
 
     def __mul__(self, other):
         if isinstance(other, Real):
@@ -234,6 +236,7 @@ class Vector2D(Sized, Iterable, Hashable, Container):
         if isinstance(other, Real):
             self._x *= other
             self._y *= other
+            return self
         else:
             return NotImplemented
 
@@ -253,6 +256,7 @@ class Vector2D(Sized, Iterable, Hashable, Container):
         if isinstance(other, Real):
             self._x /= other
             self._y /= other
+            return self
         else:
             return NotImplemented
 
@@ -266,6 +270,7 @@ class Vector2D(Sized, Iterable, Hashable, Container):
         if isinstance(other, Real):
             self._x //= other
             self._y //= other
+            return self
         else:
             return NotImplemented
 
