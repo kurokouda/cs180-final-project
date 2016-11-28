@@ -33,7 +33,7 @@ class Main(object):
     def run(self):
         self._running = True
         while self._running:
-            self._clock.tick(Config().window.FPS)
+            time_elapsed = self._clock.tick(Config().window.FPS) * 0.001
             pygame.display.set_caption('FPS: {:02.2f}, Time: {:.2f}'.format(
                         self._clock.get_fps(), pygame.time.get_ticks() * 0.001
                         ))
@@ -41,6 +41,9 @@ class Main(object):
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self._running = False
+
+            for floor in self._floors:
+                floor.update(time_elapsed)
 
             for corner, floor in zip(BLIT_CORNERS, self._floors):
                 self._screen.blit(floor.render(), corner)
