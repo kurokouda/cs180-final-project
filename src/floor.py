@@ -1,6 +1,7 @@
 from collections import OrderedDict
 from collections.abc import Sequence
 from pprint import pprint
+from random import choice as randchoice
 
 import pygame
 
@@ -8,7 +9,7 @@ from .config import Config
 from .gameworld import GameWorld
 from .cellspacepartition import CellSpacePartition
 from .d2.vector2d import Vector2D
-
+from .utils import random_point_in_tri
 from . import wall2d
 
 class Wall2D(wall2d.Wall2D, object):
@@ -42,7 +43,7 @@ class Triangle2D(Sequence):
 
     def __getitem__(self, key):
         assert isinstance(key, int), "Key should be of type 'int'"
-        assert key >= 0 and key < 3, "Index out of bounds"
+        # assert key >= 0 and key < 3, "Index {} out of bounds".format(key)
         return self._points[key]
 
     def __len__(self):
@@ -164,7 +165,25 @@ class Floor(GameWorld):
                     instance_id
                     )
 
+        self._generate_default_surface()
 
+        for room in self._rooms.values():
+            if not room.triangles:
+                continue
+            tri = randchoice(room.triangles)
+            pt = Vector2D.make_int(random_point_in_tri(*tri))
+            pygame.draw.circle(self._default_surface, pygame.Color('red'),
+                    pt, 2)
+
+
+
+
+    def get_walls(self):
+        return self._walls.values()
+
+    walls = property(get_walls)
+
+    def _generate_default_surface(self):
         self._default_surface = pygame.Surface((self._window_width,
                 self._window_height))
         self._default_surface.convert()
