@@ -1,6 +1,7 @@
 from abc import ABCMeta, abstractmethod
 from uuid import uuid4
 from numbers import Real
+from copy import copy
 
 from .entitytype import EntityType
 from ..d2.vector2d import Vector2D
@@ -19,7 +20,7 @@ class BaseGameEntity(metaclass=ABCMeta):
             bounding_radius=0):
         self._instance_id = uuid4()
         self._bounding_radius = bounding_radius
-        self._position = position
+        self._position = Vector2D.make_int(copy(position))
         self._scale = Vector2D(1.0, 1.0)
         self._entity_type = entity_type
         self._tag = False
@@ -29,7 +30,7 @@ class BaseGameEntity(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def render(self, pr):
+    def draw(self, surface, pr=0.0):
         pass
 
     # @abstractmethod
@@ -40,7 +41,7 @@ class BaseGameEntity(metaclass=ABCMeta):
         return Vector2D.from_vec(self._position)
 
     def set_position(self, value):
-        self._position.set(value)
+        self._position.set(Vector2D.make_int(value))
 
     def get_bounding_radius(self):
         return self._bounding_radius

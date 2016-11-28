@@ -162,6 +162,9 @@ class GameWorld(object):
     def toggle_show_fps(self):
         self._show_fps = not self._show_fps
 
+    def toggle_render_neighbors(self):
+        self._render_neighbors = not self._render_neighbors
+
     def is_paused(self):
         return self._paused
 
@@ -191,6 +194,9 @@ class GameWorld(object):
 
     def is_view_keys_on(self):
         return self._view_keys
+
+    def is_render_neighbors_on(self):
+        return self._render_neighbors
 
     def update(self, time_elapsed):
         if self._paused:

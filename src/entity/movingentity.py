@@ -74,7 +74,7 @@ class MovingEntity(BaseGameEntity, metaclass=ABCMeta):
         return self._heading
 
     def set_heading(self, value):
-        if value.length_sq() - 1.0 < 1e-5:
+        if value.length_sq() - 1.0 >= 1e-5:
             raise ValueError('Value is vector of zero length')
 
         self._heading = value

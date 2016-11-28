@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from sys import float_info
 from enum import IntEnum, unique
 from random import random
@@ -17,16 +18,16 @@ from .d2.transformation import (
 from .d2.geometry import line_intersection_2d
 
 # The radius of the constraining circle for the wander behavior
-WANDER_RADIUS = 1.2
+WANDER_RADIUS = 1.0
 
 # Distance the wander circle is projected in front of the agent
-WANDER_DISTANCE = 2.0
+WANDER_DISTANCE = 1.0
 
 # The maximum amount of displacement along the circle each frame
-WANDER_JITTER_PER_SEC = 80.0
+WANDER_JITTER_PER_SEC = 1.0
 
 # Used in path following
-WAYPOINT_SEEK_DIST = 20.0
+WAYPOINT_SEEK_DIST = 1.0
 
 
 @unique
@@ -213,7 +214,9 @@ class SteeringBehaviors(object):
             vehicle has left to apply and then applies that amount of the
             force to add.
         '''
-        output = dict(has_force_left=False, running_total=copy(running_total))
+        output = OrderedDict()
+        output['has_force_left'] = False
+        output['running_total'] = copy(running_total)
 
         # calculate how much steering force the vehicle has used so far
         magnitude_so_far = running_total.length()
@@ -1232,10 +1235,16 @@ class SteeringBehaviors(object):
 
         if self._summing_method == SummingMethod.WEIGHTED_AVERAGE:
             self._steering_force = self._calculate_weighted_sum()
+            # if isinstance(self._steering_force, bool):
+            #     print('HERE 1')
         elif self._summing_method == SummingMethod.PRIORITIZED:
             self._steering_force = self._calculate_prioritized()
+            # if isinstance(self._steering_force, bool):
+            #     print('HERE 2')
         elif self._summing_method == SummingMethod.DITHERED:
             self._steering_force = self._calculate_dithered()
+            # if isinstance(self._steering_force, bool):
+            #     print('HERE 3')
         else:
             self._steering_force = Vector2D()
 

@@ -2,15 +2,16 @@ from collections import OrderedDict
 from collections.abc import Sequence
 from pprint import pprint
 from random import choice as randchoice, random
+from math import pi as PI
 
 import pygame
 
 from .config import Config
 from .gameworld import GameWorld
-from .cellspacepartition import CellSpacePartition
 from .d2.vector2d import Vector2D
 from .utils import random_point_in_tri
-from . import wall2d
+from .entity import vehicle
+from . import wall2d, cellspacepartition
 
 class Wall2D(wall2d.Wall2D, object):
     __slots__ = wall2d.Wall2D.__slots__
@@ -114,6 +115,27 @@ class Room(object):
             door.draw(surface)
 
 
+class Person(vehicle.Vehicle):
+    def draw(self, surface):
+        pygame.draw.circle(surface, (255, 0, 0), self._position, 2)
+
+class CellSpacePartition(cellspacepartition.CellSpacePartition):
+    def render(self, surface):
+        x_step = self._space_width // self._num_cells_x
+        y_step = self._space_height // self._num_cells_y
+
+        # draw vertical lines
+        for i in range(self._num_cells_x - 1):
+            from_pt = ((i + 1) * x_step, 0)
+            to_pt = ((i + 1) * x_step, self._space_height)
+            pygame.draw.aaline(surface, pygame.Color('gray90'), from_pt, to_pt)
+
+        for i in range(self._num_cells_y - 1):
+            from_pt = (0, (i + 1) * y_step)
+            to_pt = (self._space_width, (i + 1) * y_step)
+            pygame.draw.aaline(surface, pygame.Color('gray90'), from_pt, to_pt)
+
+
 class Floor(GameWorld):
 
     instances = {}
@@ -132,6 +154,8 @@ class Floor(GameWorld):
                 cells_y=Config().NUM_CELLS_Y,
                 max_entities=self._num_people
                 )
+        if not self.is_render_neighbors_on():
+            self.toggle_render_neighbors()
 
         point_scale = self._window_width / map_data['dim']['width']
 
@@ -181,22 +205,29 @@ class Floor(GameWorld):
 
         self._generate_default_surface()
 
-        pts = []
-        while len(pts) < self._num_people:
-            for room in self._rooms.values():
-                if not room.triangles:
-                    continue
-                if random() > room.prob:
-                    continue
-                tri = randchoice(room.triangles)
-                pt = Vector2D.make_int(random_point_in_tri(*tri))
-                pts.append(pt)
+        while len(self._vehicles) < self._num_people:
+            room = randchoice(tuple(self._rooms.values()))
+            if not room.triangles:
+                continue
+            if random() > room.prob:
+                continue
+            tri = randchoice(room.triangles)
+            spawn_pos = Vector2D.make_int(random_point_in_tri(*tri))
 
-        for pt in pts:
-            pygame.draw.circle(self._default_surface, (255, 0, 0),
-                    pt, 2)
+            person = Person(
+                    world=self,
+                    position=spawn_pos,
+                    rotation=random() * 2 * PI,
+                    velocity=Vector2D(),
+                    mass=Config().VEHICLE_MASS,
+                    max_force=Config().STEERING_FORCE,
+                    max_speed=Config().MAX_SPEED,
+                    max_turn_rate=Config().MAX_TURN_RATE_PER_SECOND,
+                    scale=Config().VEHICLE_SCALE
+                    )
+            person.steering.wander_on()
 
-
+            self._vehicles.append(person)
 
 
     def get_walls(self):
@@ -213,6 +244,9 @@ class Floor(GameWorld):
         ## Uncomment to draw triangles
         # for tri in self._triangles.values():
         #     tri.draw(self._default_surface)
+
+        if self.is_render_neighbors_on():
+            self._cell_space.render(self._default_surface)
 
         for wall in self._walls.values():
             wall.draw(self._default_surface)
@@ -239,7 +273,11 @@ class Floor(GameWorld):
     def render(self):
         floor_surface = pygame.Surface.copy(self._default_surface)
 
+        for person in self._vehicles:
+            person.draw(floor_surface)
+
         return floor_surface
 
     def update(self, time_elapsed):
-        pass
+        for person in self._vehicles:
+            person.update(time_elapsed)

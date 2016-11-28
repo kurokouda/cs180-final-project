@@ -84,8 +84,8 @@ class Vehicle(MovingEntity):
 
         steering_force = self.steering.calculate()
         acceleration = steering_force / self.mass
-        self.velocity += acceleration * time_elapsed
-        self.velocity.truncate_ip(self.max_speed)
+        self.velocity += (acceleration * time_elapsed)
+        self.velocity = self.velocity.truncate(self.max_speed)
         self.position += self.velocity * time_elapsed
 
         if self.velocity.length_sq() > 1e-8:
@@ -94,17 +94,18 @@ class Vehicle(MovingEntity):
         # self.enforce_non_penetration_constraint(self,
         #     self.game_world.agnets())
 
-        Vector2D.wrap_around(self.position, Config().window.WIDTH,
-                Config().window.HEIGHT)
+        self.position = Vector2D.wrap_around(self.position,
+                self.world.window_width, self.world.window_height)
 
-        if self.steering.is_space_partition_on():
+
+        if self.steering.is_space_partitioning_on():
             self.world.cell_space.update_entity(self, old_pos)
 
         if self.is_smoothing_on():
             self._smoothed_heading = self._heading_smoother.update(
                     self.heading)
 
-    def render(self, pr):
+    def draw(self, surface, pr=0.0):
         pass
 
     def __copy__(self):
