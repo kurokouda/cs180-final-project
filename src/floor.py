@@ -1,7 +1,7 @@
 from collections import OrderedDict
 from collections.abc import Sequence
 from pprint import pprint
-from random import choice as randchoice
+from random import choice as randchoice, random
 
 import pygame
 
@@ -68,12 +68,14 @@ class Room(object):
             '_walls',
             '_doors',
             '_triangles',
+            '_prob'
             )
 
-    def __init__(self, walls=(), doors=(), triangles=(), id_=0):
+    def __init__(self, walls=(), doors=(), triangles=(), prob=0.0, id_=0):
         self._walls = walls
         self._doors = doors
         self._triangles = triangles
+        self._prob = prob
         self._id = id_
 
     @property
@@ -95,6 +97,10 @@ class Room(object):
     @property
     def name(self):
         return self._id
+
+    @property
+    def prob(self):
+        return self._prob
 
     def __repr__(self):
         return '<Room:{}>'.format(self._id)
@@ -169,17 +175,25 @@ class Floor(GameWorld):
                     tuple(self._doors[k] for k in room_data['door_ids']),
                     tuple(self._triangles[k]
                         for k in room_data['triangle_ids']),
+                    room_data['pr'],
                     instance_id
                     )
 
         self._generate_default_surface()
 
-        for room in self._rooms.values():
-            if not room.triangles:
-                continue
-            tri = randchoice(room.triangles)
-            pt = Vector2D.make_int(random_point_in_tri(*tri))
-            pygame.draw.circle(self._default_surface, pygame.Color('red'),
+        pts = []
+        while len(pts) < self._num_people:
+            for room in self._rooms.values():
+                if not room.triangles:
+                    continue
+                if random() > room.prob:
+                    continue
+                tri = randchoice(room.triangles)
+                pt = Vector2D.make_int(random_point_in_tri(*tri))
+                pts.append(pt)
+
+        for pt in pts:
+            pygame.draw.circle(self._default_surface, (255, 0, 0),
                     pt, 2)
 
 
