@@ -1474,91 +1474,106 @@
     		"id": "thesis_room",
     		"wall_ids": [0, 1, 2, 3, 4],
     		"door_ids": [0],
-    		"triangle_ids": [0, 1]
+    		"triangle_ids": [0, 1],
+			"pr": 0.03
     	},
     	{
     		"id": "faculty_reading_room",
     		"wall_ids": [2, 96, 64, 25, 26, 27],
     		"door_ids": [1],
-    		"triangle_ids": [2, 3]
+    		"triangle_ids": [2, 3],
+			"pr": 0.03
     	},
     	{
     		"id": "elec_room_1",
     		"wall_ids": [28, 29, 30, 31, 32],
     		"door_ids": [2],
-    		"triangle_ids": [10, 11]
+    		"triangle_ids": [10, 11],
+			"pr": 0.03
     	},
     	{
     		"id": "cnn_1",
     		"wall_ids": [33, 31, 34, 40, 35],
     		"door_ids": [3],
-    		"triangle_ids": [12, 13]
+    		"triangle_ids": [12, 13],
+			"pr": 0.03
     	},
     	{
     		"id": "serials",
     		"wall_ids": [3, 4, 5, 39, 38, 37, 36, 35, 33, 32, 28, 26, 27],
     		"door_ids": [0, 1, 2, 3, 4],
-    		"triangle_ids": [4, 5, 6, 7]
+    		"triangle_ids": [4, 5, 6, 7],
+			"pr": 0.7
     	},
     	{
     		"id": "learning_commons",
     		"wall_ids": [13, 14, 16, 17, 18, 19, 23, 95, 94, 92, 93, 87, 86, 82, 81, 80],
     		"door_ids": [7, 16, 15],
-    		"triangle_ids": [18, 19, 24, 25]
+    		"triangle_ids": [18, 19, 24, 25],
+			"pr": 0.6
     	},
     	{
     		"id": "collaborative_work_station",
     		"wall_ids": [15, 16, 17, 20, 18],
     		"door_ids": [16],
-    		"triangle_ids": [20, 21]
+    		"triangle_ids": [20, 21],
+			"pr": 0.1
     	},
 		{
     		"id": "multimedia_room",
     		"wall_ids": [19, 20, 21, 22, 23],
     		"door_ids": [15],
-    		"triangle_ids": [22, 23]
+    		"triangle_ids": [22, 23],
+			"pr": 0.1
     	},
     	{
     		"id": "women_cr",
     		"wall_ids": [83, 81, 79, 76, 77],
     		"door_ids": [13],
-    		"triangle_ids": [26, 27]
+    		"triangle_ids": [26, 27],
+			"pr": 0.2
     	},
     	{
     		"id": "men_cr",
     		"wall_ids": [78, 76, 75, 74, 72],
     		"door_ids": [12],
-    		"triangle_ids": [28, 29]
+    		"triangle_ids": [28, 29],
+			"pr": 0.2
     	},
     	{
     		"id": "elec_room_2",
     		"wall_ids": [69, 73, 71, 66, 63],
     		"door_ids": [11],
-    		"triangle_ids": []
+    		"triangle_ids": [],
+			"pr": 0.03
     	},
     	{
     		"id": "cnn_2",
     		"wall_ids": [60, 61, 62, 63, 65],
     		"door_ids": [10],
-    		"triangle_ids": []
+    		"triangle_ids": [],
+			"pr": 0.03
     	},
     	{
     		"id": "storage_room",
     		"wall_ids": [88, 89, 90, 91, 92, 93],
     		"door_ids": [9],
-    		"triangle_ids": []
+    		"triangle_ids": [],
+			"pr": 0.03
     	},
     	{
     		"id": "disable_toilet",
     		"wall_ids": [85, 84, 83, 82, 86],
     		"door_ids": [14],
-    		"triangle_ids": []
+    		"triangle_ids": [],
+			"pr": 0.03
     	},
     	{
     		"id": "hallway",
     		"wall_ids": [36, 40, 41, 42, 43, 55, 56, 54, 53, 52, 51, 50, 49, 48, 47, 59, 57, 38, 60, 61, 62, 69, 73, 72, 78, 77, 84, 85, 87, 88, 89, 90, 91, 94, 95, 13, 12, 11, 10, 9, 8, 7, 6, 39, 58, 37, 114, 115],
     		"door_ids": [4, 8, 10, 11, 12, 13, 14, 9, 7, 6, 5],
-    		"triangle_ids": [8, 9, 40, 41, 39, 38, 37, 34, 33, 32, 31, 30]
+    		"triangle_ids": [8, 9, 40, 41, 39, 38, 37, 34, 33, 32, 31, 30],
+			"pr": 0.8
     	}
     ]
 }
