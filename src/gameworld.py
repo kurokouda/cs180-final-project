@@ -63,8 +63,9 @@ class GameWorld(object):
         self._render_neighbors = False
         self._view_keys = False
         self._show_cell_space_info = False
+        self._cell_space = None
 
-        self._set_cell_space()
+        # self._set_cell_space()
 
         # NOTE: Code below won't apply for project implementation. Encapsulate
         # in a function for overriding.
@@ -105,14 +106,14 @@ class GameWorld(object):
         #     for i in range(LAST):
         #         self._vehicles[i].steering.evade_on(self._vehicles[LAST])
 
-    def _set_cell_space(self):
-        self._cell_space = CellSpacePartition(
-                width=self._window_width,
-                height=self._window_height,
-                cells_x=Config().NUM_CELLS_X,
-                cells_y=Config().NUM_CELLS_Y,
-                max_entities=Config().NUM_AGENTS
-                )
+    # def _set_cell_space(self):
+    #     self._cell_space = CellSpacePartition(
+    #             width=self._window_width,
+    #             height=self._window_height,
+    #             cells_x=Config().NUM_CELLS_X,
+    #             cells_y=Config().NUM_CELLS_Y,
+    #             max_entities=Config().NUM_AGENTS
+    #             )
 
     def non_penetration_constraint(self, vehicle):
         enforce_non_penetration_constraint(vehicle, self._vehicles)
