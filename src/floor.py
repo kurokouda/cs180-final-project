@@ -113,12 +113,19 @@ class Floor(GameWorld):
     instances = {}
 
     def __init__(self, map_data):
+        super().__init__(Config().window.WIDTH // 2,
+                Config().window.HEIGHT // 2)
+
         Floor.instances[map_data['id']] = self
         self._id = map_data['id']
         self._num_people = map_data['num_people']
-        self._cell_space = None
-        super().__init__(Config().window.WIDTH // 2,
-                Config().window.HEIGHT // 2)
+        self._cell_space = CellSpacePartition(
+                width=self._window_width,
+                height=self._window_height,
+                cells_x=Config().NUM_CELLS_X,
+                cells_y=Config().NUM_CELLS_Y,
+                max_entities=self._num_people
+                )
 
         point_scale = self._window_width / map_data['dim']['width']
 
