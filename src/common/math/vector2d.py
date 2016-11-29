@@ -45,8 +45,8 @@ class Vector2D(Sized, Iterable, Hashable, Container):
 
     @staticmethod
     def in_FOV(source, direction, target, fov):
-        to_target = (target - source).normalize()
-        return direction * to_target >= math.cos(fov / 2.0)
+        to_target = Vector2D(*target).sub(source).normalize()
+        return to_target.mul(direction) >= math.cos(fov / 2.0)
 
     __slots__ = ('__x', '__y')
 
