@@ -1,0 +1,101 @@
+{
+    "title": "CS 180 Final Project -- Disaster Risk Simulation",
+    "window": {
+        "width": 1280,
+        "height": 720,
+        "fps": 60
+    },
+
+    "maps": {
+        "directory": "floor_maps",
+        "filenames": [
+            "first_floor.json",
+            "second_floor.json",
+            "third_floor.json"
+        ]
+    },
+    "num_cells_x": 30,
+    "num_cells_y": 18,
+
+
+
+    "__comment__": [
+        "How many samples the smoother will use to average a value"
+    ],
+    "num_samples_for_smoothing": 10,
+
+
+
+    "__comment__": [
+        "This is used to multiply the steering force AND all the",
+        "multipliers found in SteeringBehavior"
+    ],
+    "steering_force_tweaker": 10.0,
+    "steering_force": 2.0,
+    "max_speed": 2.0,
+    "vehicle_mass": 1.0,
+    "vehicle_scale": 1.0,
+
+
+
+    "__comment__": [
+        "Use these values to tweak the amount that each steering",
+        "force contributes to the total steering force"
+    ],
+    "weights": {
+        "separation": 1.0,
+        "alignment": 1.0,
+        "cohesion": 2.0,
+        "obstacle_avoidance": 10.0,
+        "wall_avoidance": 10.0,
+        "wander": 1.0,
+        "seek": 1.0,
+        "flee": 1.0,
+        "arrive": 1.0,
+        "pursuit": 1.0,
+        "offset_pursuit": 1.0,
+        "interpose": 1.0,
+        "hide": 1.0,
+        "evade": 0.01,
+        "follow_path": 0.05
+    },
+
+
+
+    "__comment__": [
+        "How close a neighbor must be before an agent perceives it",
+        "(considers it to be within its neighborhood)"
+    ],
+    "view_distance": 50.0,
+
+
+
+    "__comment__": [ "Used in obstacle avoidance" ],
+    "min_detection_box_length": 40.0,
+
+
+
+    "__comment__": [ "Used in wall avoidance" ],
+    "wall_detection_feller_length": 40.0,
+
+
+
+    "__comment__": [
+        "These are the propbabilities that a steering behavior will",
+        "be used when the Prioritized Dither calculate method is used",
+        "to sum combined behaviors"
+    ],
+    "probabilities": {
+        "wall_avoidance": 0.5,
+        "obstacle_avoidance": 0.5,
+        "separation": 0.2,
+        "alignment": 0.3,
+        "cohesion": 0.6,
+        "wander": 0.8,
+        "seek": 0.8,
+        "flee": 0.6,
+        "evade": 1.0,
+        "hide": 0.8,
+        "arrive": 0.5
+    }
+}
