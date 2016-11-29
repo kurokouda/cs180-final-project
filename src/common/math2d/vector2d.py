@@ -1,8 +1,11 @@
+from itertools import combinations
 from collections.abc import Iterable, Hashable, Container, Sized
 from enum import IntEnum, unique
 from numbers import Real
 import sys
 import math
+
+from ..utils import cantor
 
 
 
@@ -204,9 +207,7 @@ class Vector2D(Sized, Iterable, Hashable, Container):
             return NotImplemented
 
     def __hash__(self):
-        k1 = self.__x
-        k2 = self.__y
-        return 0.5 * (k1 + k2) * (k1 + k2 + 1) + k2
+        return cantor(self.__x, self.__y)
 
     def __iter__(self):
         yield self.__x
@@ -216,7 +217,7 @@ class Vector2D(Sized, Iterable, Hashable, Container):
         return value == self.__x or value == self.__y
 
     def __len__(self):
-        return 2
+        return  2
 
     def __repr__(self):
         return '<Vector2D ({}, {})>'.format(self.x, self.y)
@@ -230,6 +231,16 @@ def main():
     v1.add((-123, 34))
     print(v1)
     print(v1 is v1)
+
+    rad = 500
+    ls = list(range(-rad, rad+1))
+    combs = list(combinations(ls, 2))
+    scombs = set()
+    for x, y in combs:
+        v = Vector2D(x, y)
+        scombs.add(hash(v))
+    print(len(combs))
+    print(len(scombs))
 
 
 if __name__ == '__main__':
