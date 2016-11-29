@@ -9,6 +9,7 @@
 bin/
 lib/
 include/
+spike/
 
 # Byte-compiled / optimized / DLL files
 **/__pycache__
