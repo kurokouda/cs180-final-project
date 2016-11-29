@@ -15,31 +15,33 @@ class Rotation(IntEnum):
 class Vector2D(Sized, Iterable, Hashable, Container):
     @staticmethod
     def round(vec, n):
-        vec.x = round(vec.x, n)
-        vec.y = round(vec.y, n)
+        vec[0] = round(vec[0], n)
+        vec[1] = round(vec[1], n)
         return vec
 
     @staticmethod
     def wrap_around(vec, maxx, maxy):
-        if vec.x > maxx:
-            vec.x = 0
-        if vec.x < 0:
-            vec.x = maxx
-        if vec.y > maxy:
-            vec.y = 0
-        if vec.y < 0:
-            vec.y = maxy
+        if vec[0] > maxx:
+            vec[0] = 0
+        if vec[0] < 0:
+            vec[0] = maxx
+        if vec[1] > maxy:
+            vec[1] = 0
+        if vec[1] < 0:
+            vec[1] = maxy
         return vec
 
     @staticmethod
     def inside_region_vec(vec, vec_top_left, vec_bottom_right):
-        return (vec.x >= vec_top_left.x and vec.y >= vec_top_left.y and
-                vec.x <= vec_bottom_right.x and vec.x <= vec_bottom_right.y)
+        return (vec[0] >= vec_top_left[0] and
+                vec[1] >= vec_top_left[1] and
+                vec[0] <= vec_bottom_right[0] and
+                vec[0] <= vec_bottom_right[1])
 
     @staticmethod
     def inside_region_pt(vec, top, left, bottom, right):
-        return (vec.x >= left and vec.y >= top and
-                vec.x <= right and vec.x <= bottom)
+        return (vec[0] >= left and vec[1] >= top and
+                vec[0] <= right and vec[0] <= bottom)
 
     @staticmethod
     def in_FOV(source, direction, target, fov):
@@ -99,8 +101,8 @@ class Vector2D(Sized, Iterable, Hashable, Container):
     reverse = property(__get_reverse)
 
     def set(self, vec):
-        self.__x = vec.x
-        self.__y = vec.y
+        self.__x = vec[0]
+        self.__y = vec[1]
         return self
 
     def make_zero(self):
@@ -121,7 +123,7 @@ class Vector2D(Sized, Iterable, Hashable, Container):
         X axis to right like a pygame app)
         '''
         return (Rotation.COUNTERCLOCKWISE
-                if self.__y * other.__x > self.__x * other.__y
+                if self.__y * other[0] > self.__x * other[1]
                 else Rotation.CLOCKWISE)
 
     def normalize(self):
@@ -145,13 +147,13 @@ class Vector2D(Sized, Iterable, Hashable, Container):
     def distance(self, other):
         '''Calculates the euclidean distance between two vectors
         '''
-        return ((self.__x - other.__x)**2 + (self.__y - other.__y)**2)**0.5
+        return ((self.__x - other[0])**2 + (self.__y - other[1])**2)**0.5
 
     def distance_sq(self, other):
         '''Squared version of distance.
         Calculates the euclidean distance squared between two vectors
         '''
-        return (self.__x - other.__x)**2 + (self.__y - other.__y)**2
+        return (self.__x - other[0])**2 + (self.__y - other[1])**2
 
     def reflect(self, norm):
         '''Given a normalized vector this method reflects the vector it
@@ -176,13 +178,13 @@ class Vector2D(Sized, Iterable, Hashable, Container):
             raise KeyError('Invalid key \'{}\' supplied'.format(key))
 
     def add(self, other):
-        self.__x += other.__x
-        self.__y += other.__y
+        self.__x += other[0]
+        self.__y += other[1]
         return self
 
     def sub(self, other):
-        self.__x -= other.__x
-        self.__y -= other.__y
+        self.__x -= other[0]
+        self.__y -= other[1]
         return self
 
     def mul(self, other):
@@ -193,23 +195,11 @@ class Vector2D(Sized, Iterable, Hashable, Container):
     def dot(self, other):
         '''Calculates the dot product
         '''
-        return self.__x * other.__x + self.__y * other.__y
-
-    def __lt__(self, other):
-        try:
-            return self.length_sq < other.length_sq
-        except AttributeError:
-            return NotImplemented
-
-    def __ge__(self, other):
-        try:
-            return self.length_sq >= other.length_sq
-        except AttributeError:
-            return NotImplemented
+        return self.__x * other[0] + self.__y * other[1]
 
     def __eq__(self, other):
         try:
-            return self.__x == other.__x and self.__y == other.__y
+            return self.__x == other[0] and self.__y == other[1]
         except AttributeError:
             return NotImplemented
 
@@ -237,6 +227,9 @@ def main():
     print(v1)
     v1.add(v2)
     print(v1)
+    v1.add((-123, 34))
+    print(v1)
+    print(v1 is v1)
 
 
 if __name__ == '__main__':
