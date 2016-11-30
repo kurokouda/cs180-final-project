@@ -51,6 +51,7 @@ class Vector2D(Sized, Iterable, Hashable, Container):
         to_target = Vector2D(*target).sub(source).normalize()
         return to_target.mul(direction) >= math.cos(fov / 2.0)
 
+
     __slots__ = ('__x', '__y')
 
     def __init__(self, x=0, y=0):
@@ -147,17 +148,6 @@ class Vector2D(Sized, Iterable, Hashable, Container):
             self.mul(max_length)
         return self
 
-    def distance(self, other):
-        '''Calculates the euclidean distance between two vectors
-        '''
-        return ((self.__x - other[0])**2 + (self.__y - other[1])**2)**0.5
-
-    def distance_sq(self, other):
-        '''Squared version of distance.
-        Calculates the euclidean distance squared between two vectors
-        '''
-        return (self.__x - other[0])**2 + (self.__y - other[1])**2
-
     def reflect(self, norm):
         '''Given a normalized vector this method reflects the vector it
         is operating upon. (like the path of a ball bouncing off a wall)
@@ -195,10 +185,31 @@ class Vector2D(Sized, Iterable, Hashable, Container):
         self.y *= other
         return self
 
+    def div(self, other):
+        self.x /= other
+        self.y /= other
+        return self
+
+    def floordiv(self, other):
+        self.x //= other
+        self.y //= other
+        return self
+
     def dot(self, other):
         '''Calculates the dot product
         '''
         return self.__x * other[0] + self.__y * other[1]
+
+    def distance(self, other):
+        '''Calculates the euclidean distance between two vectors
+        '''
+        return ((self.__x - other[0])**2 + (self.__y - other[1])**2)**0.5
+
+    def distance_sq(self, other):
+        '''Squared version of distance.
+        Calculates the euclidean distance squared between two vectors
+        '''
+        return (self.__x - other[0])**2 + (self.__y - other[1])**2
 
     def __eq__(self, other):
         try:
