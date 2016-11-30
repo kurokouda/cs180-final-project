@@ -2,7 +2,6 @@ from collections import OrderedDict
 from sys import float_info
 from enum import IntEnum, unique
 from random import random
-from copy import deepcopy, copy
 import math
 
 from .config import Config
@@ -15,7 +14,7 @@ from .d2.transformation import (
         vector_to_world_space,
         create_whiskers,
         )
-from .d2.geometry import line_intersection_2d
+from src.common.math2d.line2d import LineSegment2D
 
 Cfg = Config()
 
@@ -835,17 +834,23 @@ class SteeringBehaviors(object):
 
             # run through each wall checking for any intersection points
             for wall in walls:
-                lines = line_intersection_2d(
+                # lines = line_intersection_2d(
+                #         self._vehicle.position,
+                #         feeler,
+                #         wall.from_pt,
+                #         wall.to_pt)
+                intersectinfo = {}
+                has_ip = LineSegment2D.line_intersection(
                         self._vehicle.position,
                         feeler,
-                        wall.from_pt,
-                        wall.to_pt)
-                if lines['has_ip']:
+                        intersectinfo
+                        )
+                if has_ip:
 
                     # is this the closest found so far? If so keep a record
-                    if lines['dist_to_ip'] < dist_to_closest_ip:
+                    if intersectinfo['dist_to_ip'] < dist_to_closest_ip:
                         closest_wall = wall
-                        closest_ip = lines['ip']
+                        closest_ip.set(intersectinfo['ip'])
 
             # if an intersection point has been detected, calculate a force
             # that will direct the agent away
@@ -853,11 +858,12 @@ class SteeringBehaviors(object):
 
                 # calculate by what distance the projected position of the
                 # agent will overshoot the wall
-                overshoot = feeler - closest_ip
+                overshoot = Vector2D(*feeler).sub(closest_ip)
 
                 # create a force in the direction of the wall normal, with a
                 # magnitude of the overshoot
-                steering_force = closest_wall.normal * overshoot.length()
+                steering_force.set(Vector2D(*closest_wall.normal)
+                        .mul(overshoot.length))
 
         return steering_force
 
