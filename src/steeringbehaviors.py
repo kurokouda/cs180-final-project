@@ -1261,16 +1261,10 @@ class SteeringBehaviors(object):
 
         if self._summing_method == SummingMethod.WEIGHTED_AVERAGE:
             self._steering_force = self._calculate_weighted_sum()
-            # if isinstance(self._steering_force, bool):
-            #     print('HERE 1')
         elif self._summing_method == SummingMethod.PRIORITIZED:
             self._steering_force = self._calculate_prioritized()
-            # if isinstance(self._steering_force, bool):
-            #     print('HERE 2')
         elif self._summing_method == SummingMethod.DITHERED:
             self._steering_force = self._calculate_dithered()
-            # if isinstance(self._steering_force, bool):
-            #     print('HERE 3')
         else:
             self._steering_force = Vector2D()
 
