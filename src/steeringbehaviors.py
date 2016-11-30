@@ -683,17 +683,18 @@ class SteeringBehaviors(object):
         rand_y = random_clamped() * jitter_this_time_slice
 
         # first, add a small random vector to the target's position
-        self._wander_target += Vector2D(rand_x, rand_y)
+        self._wander_target.add((rand_x, rand_y))
 
         # reproject this new vector back on to a unit circle
-        self._wander_target.normalize_ip()
+        self._wander_target.normalize()
 
         # increase the length of the vector to the same as the radius
         # of the wander circle
-        self._wander_target *= self._wander_radius
+        self._wander_target.mul(self._wander_radius)
 
         # move the target into a position WanderDist in front of the agent
-        target_local = self._wander_target + Vector2D(self._wander_distance, 0)
+        target_local = (Vector2D(*self._wander_target)
+                .add((self._wander_distance, 0)))
 
         # project the target into world space
         target_world = point_to_world_space(target_local,
@@ -702,7 +703,7 @@ class SteeringBehaviors(object):
             self._vehicle.position)
 
         # and steer towards it
-        return target_world - self._vehicle.position
+        return target_world.sub(self._vehicle.position)
 
 
 
