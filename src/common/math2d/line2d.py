@@ -1,44 +1,35 @@
 from math import isclose
-from collections.abc import Iterable, Hashable
+from collections.abc import Iterable, Hashable, Container
 from ..utils import cantor
 from .vector2d import Vector2D
 
-class Line2D(Iterable, Hashable):
+class Line2D(Iterable, Hashable, Container):
     @classmethod
     def from_points(cls, pt_a, pt_b):
-        return Line2D(*pt_a, *pt_b)
+        return cls(*pt_a, *pt_b)
 
-    def __init__(self, a, b, c=None, d=None):
-        self._from_pt = None
-        self._to_pt = None
+    def __init__(self, a, b, c, d):
+        self._from_pt = Vector2D()
+        self._to_pt = Vector2D()
         self.__sub_init(a, b, c, d)
 
     def __sub_init(self, a, b, c, d):
-        try:
-            self.from_pt = Vector2D(*a)
-            self.to_pt = Vector2D(*b)
-        except TypeError:
-            try:
-                self.from_pt = Vector2D(a, b)
-                self.to_pt = Vector2D(c, d)
-            except Exception as e:
-                raise e
+        self._from_pt.set((a, b))
+        self._to_pt.set((c, d))
 
     def __get_from_pt(self):
         return self._from_pt
 
     def __set_from_pt(self, value):
-        if self._from_pt is None:
-            self._from_pt = Vector2D()
         self._from_pt.set(value)
+        assert self._from_pt != self._to_pt
 
     def __get_to_pt(self):
         return self._to_pt
 
     def __set_to_pt(self, value):
-        if self._to_pt is None:
-            self._to_pt = Vector2D()
         self._to_pt.set(value)
+        assert self._from_pt != self._to_pt
 
     from_pt = property(__get_from_pt, __set_from_pt)
     to_pt = property(__get_to_pt, __set_to_pt)
@@ -57,12 +48,30 @@ class Line2D(Iterable, Hashable):
         return '<Line2D ({}, {}), ({}, {})>'.format(
                 *self._from_pt, *self._to_pt)
 
+    def __getitem__(self, key):
+        if key == 0 or key == 'from_pt':
+            return self.from_pt
+        elif key == 1 or key == 'to_pt':
+            return self.to_pt
+        else:
+            raise KeyError('Invalid key \'{}\' supplied'.format(key))
+
+    def __setitem__(self, key, value):
+        if key == 0 or key == 'from_pt':
+            self.from_pt = value
+        elif key == 1 or key == 'to_pt':
+            self.to_pt = value
+        else:
+            raise KeyError('Invalid key \'{}\' supplied'.format(key))
+
+    def __contains__(self, pt):
+        return pt == self.from_pt or pt == self.to_pt
+
 
 class LineSegment2D(Line2D):
     @staticmethod
     def distance_from_point(line, p):
-        a = line.from_pt
-        b = line.to_pt
+        a, b = line
         dot_a = ((p[0] - a[0]) * (b[0] - a[0]) +
                 (p[1] - a[1]) * (b[1] - a[1]))
         if dot_a <= 0:
@@ -82,8 +91,7 @@ class LineSegment2D(Line2D):
 
     @staticmethod
     def distance_from_point_sq(line, p):
-        a = line.from_pt
-        b = line.to_pt
+        a, b = line
         dot_a = ((p[0] - a[0]) * (b[0] - a[0]) +
                 (p[1] - a[1]) * (b[1] - a[1]))
         if dot_a <= 0:
