@@ -62,8 +62,7 @@ def enforce_non_penetration_constraint(target_entity, entity_container):
         if current_entity == target_entity:
             return
 
-        to_target = Vector2D().set(target_entity.position)
-        to_target.sub(current_entity)
+        to_target = Vector2D(*target_entity.position).sub(current_entity)
         relative_distance = to_target.length
 
         amount_of_overlap = (current_entity.bounding_radius + target_entity.bounding_radius - relative_distance)
