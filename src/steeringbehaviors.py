@@ -1173,11 +1173,11 @@ class SteeringBehaviors(object):
         dist_away = radius_ob + distance_from_boundary
 
         # calculate the heading toward the object from the hunter
-        to_ob = (pos_ob - pos_hunter).normalize()
+        to_ob = Vector2D(*pos_ob).sub(pos_hunter).normalize()
 
         # scale it to size and add to the obstacles position to get
         # the hiding spot.
-        return (to_ob * dist_away) + pos_ob
+        return to_ob.mul(dist_away).add(pos_ob)
 
 
 
@@ -1219,7 +1219,7 @@ class SteeringBehaviors(object):
                 agent_side=leader.side,
                 agent_position=leader.position)
 
-        to_offset = world_offset_pos - self._vehicle.pos
+        to_offset = Vector2D(*world_offset_pos).sub(self._vehicle.pos)
 
         # the lookahead time is propotional to the distance between the leader
         # and the pursuer; and is inversely proportional to the sum of both
@@ -1228,8 +1228,9 @@ class SteeringBehaviors(object):
                 (self._vehicle.max_speed + leader.speed))
 
         # now Arrive at the predicted future position of the offset
-        return self._arrive(world_offset_pos +
-                (leader.velocity * look_ahead_time), Deceleration.FAST)
+        arrive_at = (Vector2D(*leader.velocity).mul(look_ahead_time)
+                .add(world_offset_pos))
+        return self._arrive(arrive_at, Deceleration.FAST)
 
 
 
