@@ -1277,7 +1277,7 @@ class SteeringBehaviors(object):
 
         Returns the forward component of the steering force.
         '''
-        return self._vehicle.heading * self._steering_force
+        return Vector2D(*self._vehicle.heading).mul(self._steering_force)
 
 
 
@@ -1286,7 +1286,7 @@ class SteeringBehaviors(object):
 
         Returns the side component of the steering force
         '''
-        return self._vehicle.side * self._steering_force
+        return Vector2D(*self._vehicle.side).mul(self._steering_force)
 
 
 
