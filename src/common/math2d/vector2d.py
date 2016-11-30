@@ -17,7 +17,7 @@ class Rotation(IntEnum):
 
 class Vector2D(Sized, Iterable, Hashable, Container):
     @staticmethod
-    def round(vec, n):
+    def round(vec, n=0):
         vec[0] = round(vec[0], n)
         vec[1] = round(vec[1], n)
         return vec
