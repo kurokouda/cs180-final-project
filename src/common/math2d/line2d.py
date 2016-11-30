@@ -57,3 +57,90 @@ class Line2D(Iterable, Hashable):
     def __repr__(self):
         return '<Line2D ({}, {}), ({}, {})>'.format(
                 *self._from_pt, *self._to_pt)
+
+
+class LineSegment2D(Line2D):
+    @staticmethod
+    def distance_from_point(line, p):
+        a = line.from_pt
+        b = line.to_pt
+        dot_a = ((p[0] - a[0]) * (b[0] - a[0]) +
+                (p[1] - a[1]) * (b[1] - a[1]))
+        if dot_a <= 0:
+            return Vector2D.distance(a, p)
+
+        dot_b = ((p[0] - b[0]) * (a[0] - b[0]) +
+                (p[1] - b[1]) * (a[1] - b[1]))
+        if dot_b <= 0:
+            return Vector2D.distance(b, p)
+
+        pt = Vector2D.sub(b, a)
+        pt.mul(dot_a)
+        pt.div(dot_a + dot_b)
+        pt.add(a)
+
+        return Vector2D.distance(p, pt)
+
+    @staticmethod
+    def distance_from_point_sq(line, p):
+        a = line.from_pt
+        b = line.to_pt
+        dot_a = ((p[0] - a[0]) * (b[0] - a[0]) +
+                (p[1] - a[1]) * (b[1] - a[1]))
+        if dot_a <= 0:
+            return Vector2D.distance_sq(a, p)
+
+        dot_b = ((p[0] - b[0]) * (a[0] - b[0]) +
+                (p[1] - b[1]) * (a[1] - b[1]))
+        if dot_b <= 0:
+            return Vector2D.distance_sq(b, p)
+
+        pt = Vector2D.sub(b, a)
+        pt.mul(dot_a)
+        pt.div(dot_a + dot_b)
+        pt.add(a)
+
+        return Vector2D.distance_sq(p, pt)
+
+
+    @staticmethod
+    def line_intersection(lhs, rhs, output=None):
+        a, b = lhs
+        c, d = rhs
+        r_top = (a[1] - c[1]) * (d[0] - c[0]) - (a[0] - c[0]) * (d[1] - c[1])
+        r_bot = (b[0] - a[0]) * (d[1] - c[1]) - (b[1] - a[1]) * (d[0] - c[0])
+        s_top = (a[1] - c[1]) * (b[0] - a[0]) - (a[0] - c[0]) * (b[1] - a[1])
+        s_bot = (b[0] - a[0]) * (d[1] - c[1]) - (b[1] - a[1]) * (d[0] - c[0])
+
+        has_ip = False
+        if not (isclose(r_bot, 0) or isclose(s_bot, 0)):
+            r = r_top / r_bot
+            s = s_top / s_bot
+
+            if r > 0 and r < 1 and s > 0 and s < 1:
+                if output is not None:
+                    output['dist_to_ip'] = Vector2D.distance(a, b) * r
+                    output['ip'] = Vector2D.sub(b, a).mul(r).add(a)
+                has_ip = True
+            elif output is not None:
+                output['dist_tp_ip'] = 0.0
+
+        return has_ip
+
+    def __repr__(self):
+        return '<LineSegment2D ({}, {}), ({}, {})>'.format(
+                *self._from_pt, *self._to_pt)
+
+
+def main():
+    l1 = LineSegment2D(1, 1, 4, 6)
+    l2 = LineSegment2D((5, 7), (3, 1))
+    pt = Vector2D(1, 5)
+    print(l2)
+    info = {}
+    print(LineSegment2D.line_intersection(l1, l2, info), info)
+
+    # print(LineSegment2D.distance_from_point(l1, pt))
+
+if __name__ == '__main__':
+    main()
