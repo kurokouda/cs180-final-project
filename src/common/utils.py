@@ -11,3 +11,6 @@ def cantor(a, b):
 
 def random_in_range(a, b):
     return a + random() * (b - a)
+
+def random_clamped():
+    return random() - random()
