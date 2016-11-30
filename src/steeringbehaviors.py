@@ -996,11 +996,13 @@ class SteeringBehaviors(object):
             # make sure this agent isn't included in the calculations and that
             # the agent being examined is close enough
             if neighbor != self._vehicle:
-                to_agent = self._vehicle.position - neighbor.position
+                to_agent = (Vector2D(*self._vehicle.position)
+                        .sub(neighbor.position))
 
                 # scale the force inversely proportional to the agents
                 # distance from its neighbor.
-                steering_force += to_agent.normalize() / to_agent.length()
+                steering_force.add(Vector2D(*to_agent).normalize()
+                        .div(to_agent.length))
         return steering_force
 
 
