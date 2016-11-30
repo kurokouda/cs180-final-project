@@ -8,6 +8,10 @@ class Seek(SteeringBehaviors.Type):
 
     Given a target, this behavior returns a steering force which will
         direct the agent towards the target.
+
+    Keyword arguments:
+    weight -- Real
+    container -- SteeringBehaviors
     '''
 
     def __call__(self, target_pos):
