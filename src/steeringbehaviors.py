@@ -957,17 +957,17 @@ class SteeringBehaviors(object):
             if (neighbor != self._vehicle and
                         neighbor.is_tagged() and
                     neighbor != self._target_agent_1):
-                center_of_mass += neighbor.position
+                center_of_mass.add(neighbor.position)
                 neighbor_count += 1
 
         steering_force = Vector2D()
         if neighbor_count > 0:
 
             # the center of mass is the average of the sum of positions
-            center_of_mass /= neighbor_count
+            center_of_mass.div(neighbor_count)
 
             # now seek towards that position
-            steering_force = self._seek(center_of_mass)
+            steering_force.set(self._seek(center_of_mass))
 
         # the magnitude of cohesion is usually much larger than separation or
         # allignment so it usually helps to normalize it.
