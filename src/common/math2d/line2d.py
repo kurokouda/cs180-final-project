@@ -1,5 +1,4 @@
 from math import isclose
-from types import SimpleNamespace
 from collections.abc import Iterable, Hashable
 from ..utils import cantor
 from .vector2d import Vector2D
@@ -72,14 +71,14 @@ class LineSegment2D(Line2D):
         dot_b = ((p[0] - b[0]) * (a[0] - b[0]) +
                 (p[1] - b[1]) * (a[1] - b[1]))
         if dot_b <= 0:
-            return Vector2D.distance(b, p)
+            return Vector2D(*b).distance(p)
 
-        pt = Vector2D.sub(b, a)
+        pt = Vector2D(*b).sub(a)
         pt.mul(dot_a)
         pt.div(dot_a + dot_b)
         pt.add(a)
 
-        return Vector2D.distance(p, pt)
+        return Vector2D(*p).distance(pt)
 
     @staticmethod
     def distance_from_point_sq(line, p):
@@ -88,19 +87,19 @@ class LineSegment2D(Line2D):
         dot_a = ((p[0] - a[0]) * (b[0] - a[0]) +
                 (p[1] - a[1]) * (b[1] - a[1]))
         if dot_a <= 0:
-            return Vector2D.distance_sq(a, p)
+            return Vector2D(*a).distance_sq(p)
 
         dot_b = ((p[0] - b[0]) * (a[0] - b[0]) +
                 (p[1] - b[1]) * (a[1] - b[1]))
         if dot_b <= 0:
-            return Vector2D.distance_sq(b, p)
+            return Vector2D(*b).distance_sq(p)
 
-        pt = Vector2D.sub(b, a)
+        pt = Vector2D(*b).sub(a)
         pt.mul(dot_a)
         pt.div(dot_a + dot_b)
         pt.add(a)
 
-        return Vector2D.distance_sq(p, pt)
+        return Vector2D(*p).distance_sq(pt)
 
 
     @staticmethod
@@ -120,7 +119,7 @@ class LineSegment2D(Line2D):
             if r > 0 and r < 1 and s > 0 and s < 1:
                 if output is not None:
                     output['dist_to_ip'] = Vector2D.distance(a, b) * r
-                    output['ip'] = Vector2D.sub(b, a).mul(r).add(a)
+                    output['ip'] = Vector2D(*b).sub(a).mul(r).add(a)
                 has_ip = True
             elif output is not None:
                 output['dist_tp_ip'] = 0.0
@@ -139,8 +138,7 @@ def main():
     print(l2)
     info = {}
     print(LineSegment2D.line_intersection(l1, l2, info), info)
-
-    # print(LineSegment2D.distance_from_point(l1, pt))
+    print(LineSegment2D.distance_from_point(l1, pt))
 
 if __name__ == '__main__':
     main()
