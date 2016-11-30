@@ -1062,16 +1062,16 @@ class SteeringBehaviors(object):
             # make sure *this* agent isn't included in the calculations and
             # that the agent being examined is close enough
             if neighbor != self._vehicle:
-                center_of_mass += neighbor.position
+                center_of_mass.add(neighbor.position)
                 neighbor_count += 1
 
         if neighbor_count > 0:
 
             # the center of mass is the average of the sum of positions
-            center_of_mass /= neighbor_count
+            center_of_mass.div(neighbor_count)
 
             # now seek towards that position
-            steering_force = self._seek(center_of_mass)
+            steering_force.set(self._seek(center_of_mass))
 
         # the magnitude of cohesion is usually much larger than separation or
         # allignment so it usually helps to normalize it.
