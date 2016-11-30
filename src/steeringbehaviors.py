@@ -664,8 +664,8 @@ class SteeringBehaviors(object):
                 (self._vehicle.max_speed + pursuer.speed))
 
         # now flee away from predicted future position of the pursuer
-        return self._flee(pursuer.position +
-                (pursuer.velocity * look_ahead_time))
+        return self._flee(Vector2D(*pursuer.position)
+                .add(Vector2D(pursuer.velocity).mul(look_ahead_time)))
 
 
 
