@@ -886,11 +886,13 @@ class SteeringBehaviors(object):
             if (neighbor != self._vehicle and
                         neighbor.is_tagged() and
                     neighbor != self._target_agent_1):
-                to_agent = self._vehicle.position - neighbor.position
+                to_agent = (Vector2D(*self._vehicle.position)
+                        .sub(neighbor.position))
 
                 # scale the force inversely proportional to the agents
                 # distance from its neighbor.
-                steering_force += to_agent.normalize() / to_agent.length()
+                steering_force.add(Vector2D(to_agent).normalize()
+                            .div(to_agent.length))
         return steering_force
 
 
