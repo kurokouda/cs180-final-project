@@ -1029,14 +1029,13 @@ class SteeringBehaviors(object):
             # make sure *this* agent isn't included in the calculations and
             # that the agent being examined  is close enough
             if neighbor != self._vehicle:
-                average_heading += neighbor.heading
+                average_heading.add(neighbor.heading)
                 neighbor_count += 1
 
         # if the neighborhood contained one or more vehicles, average their
         # heading vectors
         if neighbor_count > 0:
-            average_heading /= neighbor_count
-            average_heading -= self._vehicle.heading
+            average_heading.div(neighbor_count).sub(self._vehicle.heading)
 
         return average_heading
 
