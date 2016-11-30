@@ -618,10 +618,9 @@ class SteeringBehaviors(object):
         relative_heading = self._vehicle.heading * evader.heading
 
         to_evader = Vector2D().set(evader.position).sub(self._vehicle.position)
-        relative_heading = (Vector2D().set(self._vehicle.heading)
-                .dot(evader.heading))
+        relative_heading = self._vehicle.heading.dot(evader.heading)
 
-        if (to_evader * self._vehicle.heading > 0 and
+        if (to_evader.dot(self._vehicle.heading) > 0 and
                 relative_heading < -0.95): # acos(0.95) = 18 deg
             return self._seek(evader.position)
 
@@ -630,12 +629,12 @@ class SteeringBehaviors(object):
         # the lookahead time is propotional to the distance between the evader
         # and the pursuer; and is inversely proportional to the sum of the
         # agent's velocities
-        look_ahead_time = (to_evader.length() /
+        look_ahead_time = (to_evader.length /
                 (self._vehicle.max_speed + evader.speed))
 
         # now seek to the predicted future position of the evader
-        return self._seek(evader.position +
-                (evader.velocity * look_ahead_time))
+        return self._seek(Vector2D(*evader.position)
+                .add(Vector2D(*evader.velocity).mul(look_ahead_time)))
 
 
 
@@ -649,12 +648,13 @@ class SteeringBehaviors(object):
         pursuer -- Vehicle
         '''
         # Not necessary to include the check for facing direction this time
-        to_pursuer = pursuer.position - self._vehicle.position
+        to_pursuer = (Vector2D().set(pursuer.position)
+                .sub(self._vehicle.position))
 
         # uncomment the following two lines to have Evade only consider
         # pursuers within a 'threat range'
         threat_range = 100.0
-        if to_pursuer.length_sq() > threat_range * threat_range:
+        if to_pursuer.length_sq > threat_range * threat_range:
             return Vector2D()
 
         # the lookahead time is propotional to the distance between the pursuer
