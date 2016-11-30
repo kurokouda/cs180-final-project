@@ -765,7 +765,7 @@ class SteeringBehaviors(object):
                         # +/-sqrt(r^2-cY^2) for y=0. We only need to look at
                         # the smallest positive value of x because that will
                         # be the closest point of intersection.
-                        circle_center = copy(local_pos)
+                        circle_center = Vector2D(*local_pos)
 
                         # we only need to calculate the sqrt part of the above
                         # equation once
@@ -781,7 +781,7 @@ class SteeringBehaviors(object):
                         if ip < dist_to_closest_ip:
                             dist_to_closest_ip = ip
                             closest_intersecting_obstacle = current_obstacle
-                            local_pos_of_closest_obstacle = local_pos
+                            local_pos_of_closest_obstacle.set(local_pos)
 
         # if we have found an intersecting obstacle, calculate a steering
         # force away from it
