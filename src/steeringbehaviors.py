@@ -1471,105 +1471,104 @@ class SteeringBehaviors(object):
             returning.
         '''
         if self._is_on(BehaviorType.WALL_AVOIDANCE):
-            self._steering_force += (self._wall_avoidance(
-                        self._vehicle.world.walls) *
-                    self._weight_wall_avoidance)
+            self._steering_force.add(self._wall_avoidance(
+                        self._vehicle.world.walls)
+                    .mul(self._weight_wall_avoidance))
 
         if self._is_on(BehaviorType.OBSTACLE_AVOIDANCE):
-            self._steering_force += (self._obstacle_avoidance(
-                        self._vehicle.world.obstacles) *
-                    self._weight_obstacle_avoidance)
+            self._steering_force.add(self._obstacle_avoidance(
+                        self._vehicle.world.obstacles)
+                    .mul(self._weight_obstacle_avoidance))
 
         if self._is_on(BehaviorType.EVADE):
             if self._target_agent_1 is None:
                 raise ValueError('Evade target not assigned')
 
-            self._steering_force += (self._evade(
-                        self._target_agent_1) *
-                    self._weight_evade)
+            self._steering_force.add(self._evade(self._target_agent_1)
+                        .mul(self._weight_evade))
 
         if self._is_on(BehaviorType.FLEE):
-            self._steering_force += (self._flee(
-                        self._vehicle.world.crosshair) *
-                    self._weight_flee)
+            self._steering_force.add(self._flee(
+                        self._vehicle.world.crosshair)
+                        .mul(self._weight_flee))
 
         if not self.is_space_partitioning_on():
             if self._is_on(BehaviorType.SEPARATION):
-                self._steering_force += (self._separation(
-                        self._vehicle.world.agents) *
-                    self._weight_separation)
+                self._steering_force.add(self._separation(
+                        self._vehicle.world.agents)
+                        .mul(self._weight_separation))
 
             if self._is_on(BehaviorType.ALIGNMENT):
-                self._steering_force += (self._alignment(
-                        self._vehicle.world.agents) *
-                    self._weight_alignment)
+                self._steering_force.add(self._alignment(
+                        self._vehicle.world.agents)
+                        .mul(self._weight_alignment))
 
             if self._is_on(BehaviorType.COHESION):
-                self._steering_force += (self._cohesion(
-                        self._vehicle.world.agents) *
-                    self._weight_cohesion)
+                self._steering_force.add(self._cohesion(
+                        self._vehicle.world.agents)
+                        .mul(self._weight_cohesion))
         else:
             if self._is_on(BehaviorType.SEPARATION):
-                self._steering_force += (self._separation_plus(
-                        self._vehicle.world.agents) *
-                    self._weight_separation)
+                self._steering_force.add(self._separation_plus(
+                        self._vehicle.world.agents)
+                        .mul(self._weight_separation))
 
             if self._is_on(BehaviorType.ALIGNMENT):
-                self._steering_force += (self._alignment_plus(
-                        self._vehicle.world.agents) *
-                    self._weight_alignment)
+                self._steering_force.add(self._alignment_plus(
+                        self._vehicle.world.agents)
+                        .mul(self._weight_alignment))
 
             if self._is_on(BehaviorType.COHESION):
-                self._steering_force += (self._cohesion_plus(
-                        self._vehicle.world.agents) *
-                    self._weight_cohesion)
+                self._steering_force.add(self._cohesion_plus(
+                        self._vehicle.world.agents)
+                        .mul(self._weight_cohesion))
 
         if self._is_on(BehaviorType.SEEK):
-            self._steering_force += (self._seek(
-                        self._vehicle.world.crosshair) *
-                    self._weight_seek)
+            self._steering_force.add(self._seek(
+                        self._vehicle.world.crosshair)
+                        .mul(self._weight_seek))
 
         if self._is_on(BehaviorType.ARRIVE):
-            self._steering_force += (self._arrive(
-                        self._vehicle.world.crosshair, self._deceleration) *
-                    self._weight_arrive)
+            self._steering_force.add(self._arrive(
+                        self._vehicle.world.crosshair, self._deceleration)
+                        .mul(self._weight_arrive))
 
         if self._is_on(BehaviorType.WANDER):
-            self._steering_force += self._wander() * self._weight_wander
+            self._steering_force.add(self._wander().mul(self._weight_wander))
 
         if self._is_on(BehaviorType.PURSUIT):
             assert self._target_agent_1 is not None, ('Pursuit target not ' +
                     'assigned')
-            self._steering_force += (self._pursuit(self._target_agent_1) *
-                    self._weight_pursuit)
+            self._steering_force.add(self._pursuit(self._target_agent_1)
+                        .mul(self._weight_pursuit))
 
         if self._is_on(BehaviorType.OFFSET_PURSUIT):
             assert self._target_agent_1 is not None, ('Pursuit target not ' +
                     'assigned')
             assert not self._offset.is_zero(), 'No offset assigned'
 
-            self._steering_force += (self._offset_pursuit(
-                        self._target_agent_1, self._offset) *
-                    self._weight_offset_pursuit)
+            self._steering_force.add(self._offset_pursuit(
+                        self._target_agent_1, self._offset)
+                        .mul(self._weight_offset_pursuit))
 
         if self._is_on(BehaviorType.INTERPOSE):
             assert (self._target_agent_1 is not None and
                     self._target_agent_2 is not None), ('Interpose agents ' +
                         'not assigned')
-            self._steering_force += (self._interpose(
-                        self._target_agent_1, self._target_agent_2) *
-                    self._weight_interpose)
+            self._steering_force.add(self._interpose(
+                        self._target_agent_1, self._target_agent_2)
+                        .mul(self._weight_interpose))
 
         if self._is_on(BehaviorType.HIDE):
             assert self._target_agent_1 is not None, ('Hide target not ' +
                     'asssigned')
-            self._steering_force += (self._hide(self._target_agent_1,
-                        self._vehicle.world.obstacles) *
-                    self._weight_hide)
+            self._steering_force.add(self._hide(self._target_agent_1,
+                        self._vehicle.world.obstacles)
+                        .mul(self._weight_hide))
 
         if self._is_on(BehaviorType.FOLLOW_PATH):
-            self._steering_force += (self._follow_path() *
-                    self._weight_follow_path)
+            self._steering_force.add(self._follow_path()
+                        .mul(self._weight_follow_path))
 
         return self._steering_force
 
